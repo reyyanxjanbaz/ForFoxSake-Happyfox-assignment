@@ -1,6 +1,7 @@
 // ProfileCard component for displaying employee information in sidebar and chart nodes
 
 import React, { useState } from 'react';
+import { useLazyImage } from '../../hooks/useLazyImage';
 import type { Employee } from '../../features/org-chart/state/employee';
 
 export interface ProfileCardProps {
@@ -22,11 +23,13 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   onClick,
   className = '',
 }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const handleImageLoad = () => setImageLoaded(true);
-  const handleImageError = () => setImageError(true);
+  // Lazy loading for profile photo
+  const lazyImage = useLazyImage({
+    src: `/assets/photos/${employee.photoAssetKey}.jpg`,
+    alt: `${employee.name} profile photo`,
+    rootMargin: '100px', // Start loading when 100px away from viewport
+    threshold: 0.1,
+  });
 
   const handleClick = () => {
     if (onClick) {
@@ -179,22 +182,22 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     >
       {/* Avatar */}
       <div style={avatarStyle}>
-        {!imageError ? (
+        {!lazyImage.isError ? (
           <>
             <img
-              src={`/assets/photos/${employee.photoAssetKey}.jpg`}
+              ref={lazyImage.imgRef}
+              src={lazyImage.src}
               alt={`${employee.name} profile photo`}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                opacity: imageLoaded ? 1 : 0,
+                opacity: lazyImage.isLoaded ? 1 : 0,
                 transition: 'opacity var(--duration-normal) ease',
               }}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
             />
-            {!imageLoaded && (
+            {/* Loading placeholder */}
+            {!lazyImage.isLoaded && (
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -206,7 +209,21 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
                 fontSize: '0.75rem',
                 fontWeight: '500',
               }}>
-                {initials}
+                {lazyImage.isInView ? (
+                  <div
+                    style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid var(--color-gray-300)',
+                      borderTop: '2px solid var(--color-primary)',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                    aria-label="Loading photo"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
             )}
           </>

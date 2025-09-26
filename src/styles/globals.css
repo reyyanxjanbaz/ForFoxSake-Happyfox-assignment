@@ -344,6 +344,58 @@ textarea:focus-visible,
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* New node glow animation */
+.org-chart-node.new-node {
+  animation: newNodePulse 2s ease-out;
+}
+
+@keyframes newNodePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 20px rgba(234, 88, 12, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+  }
+}
+
+/* Drag and drop animations */
+.org-chart-node.dragging {
+  opacity: 0.8;
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
+/* Canvas keyboard focus styles */
+.org-chart-canvas-wrapper [role="application"]:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.org-chart-node.valid-drop-target {
+  border: 2px dashed var(--color-orange-400);
+  background: rgba(234, 88, 12, 0.05);
+}
+
+.org-chart-node.hovered-target {
+  border: 2px solid var(--color-orange-500);
+  background: rgba(234, 88, 12, 0.1);
+  box-shadow: 0 0 15px rgba(234, 88, 12, 0.3);
+}
+
+.org-chart-node.disabled-target {
+  opacity: 0.4;
+  filter: grayscale(50%);
+}
+
 /* =============================================================================
    MODAL STYLES
    ============================================================================= */

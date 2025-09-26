@@ -33,17 +33,17 @@
 - [x] T020 Create shared components `ProfileCard.tsx` and `SquaresBackground.tsx` in `src/components/shared/` with animated square backdrop and lazy-image slot.
 - [x] T021 Implement sidebar tree (`src/components/sidebar/Sidebar.tsx` + styles) with collapsible groups, ARIA tree roles, and profile cards.
 - [x] T022 Implement filter panel (`src/components/sidebar/FilterPanel.tsx`) with collapsible Framer Motion accordion, AND logic wiring, and clear controls.
-- [ ] T023 Wire highlight orchestration hook in `src/features/org-chart/hooks/useHighlights.ts` to sync FilterState results to sidebar/chart pulses.
-- [ ] T024 Implement React Flow canvas component `src/components/chart/OrgChartCanvas.tsx` rendering profile card nodes, edges, minimap, controls, and responsive sizing.
-- [ ] T025 Implement drag/drop reassignment hook `src/features/org-chart/hooks/useDragReassign.ts` validating cycles, triggering PATCH, updating InteractionLog.
-- [ ] T026 Implement Add Node modal + trigger (`src/components/shared/AddNodeModal.tsx`, `src/features/org-chart/hooks/useAddNode.ts`) auto-filling Faker data and inserting via POST.
-- [ ] T027 Create org chart provider/context in `src/features/org-chart/providers/OrgChartProvider.tsx` to keep sidebar and canvas state synchronized after mutations.
-- [ ] T028 Add Framer Motion animations (sidebar collapse, filter accordion, node addition glow) across relevant components while respecting animation guidelines.
+- [x] T023 Wire highlight orchestration hook in `src/features/org-chart/hooks/useHighlights.ts` to sync FilterState results to sidebar/chart pulses.
+- [x] T024 Implement React Flow canvas component `src/components/chart/OrgChartCanvas.tsx` rendering profile card nodes, edges, minimap, controls, and responsive sizing.
+- [x] T025 Implement drag/drop reassignment hook `src/features/org-chart/hooks/useDragReassign.ts` validating cycles, triggering PATCH, updating InteractionLog.
+- [x] T026 Implement Add Node modal + trigger (`src/components/shared/AddNodeModal.tsx`, `src/features/org-chart/hooks/useAddNode.ts`) auto-filling Faker data and inserting via POST.
+- [x] T027 Create org chart provider/context in `src/features/org-chart/providers/OrgChartProvider.tsx` to keep sidebar and canvas state synchronized after mutations.
+- [x] T028 Add Framer Motion animations (sidebar collapse, filter accordion, node addition glow) across relevant components while respecting animation guidelines.
 
 ## Phase 3.4: Polish & Compliance
 
-- [ ] T029 Implement accessibility pass: keyboard navigation for tree + canvas, focus traps in modal, ARIA labels in components touched above.
-- [ ] T030 Add lazy-loading for photo assets and loading placeholders in `ProfileCard` + ensure Mirage seeds reference bundled images.
+- [x] T029 Implement accessibility pass: keyboard navigation for tree + canvas, focus traps in modal, ARIA labels in components touched above.
+- [x] T030 Add lazy-loading for photo assets and loading placeholders in `ProfileCard` + ensure Mirage seeds reference bundled images.
 - [ ] T031 Tune responsive breakpoints in `src/styles/globals.css` and layout components for tablet/mobile views.
 - [ ] T032 Run `npm run test` and `npm run lint` ensuring all suites (unit, integration, contract) pass and adjust configs as needed.
 - [ ] T033 Prepare deployment configs (`netlify.toml`, `vercel.json`, `package.json` deploy scripts) and document environment variables if any.

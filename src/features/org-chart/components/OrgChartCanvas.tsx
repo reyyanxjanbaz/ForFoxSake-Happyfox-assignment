@@ -1,6 +1,7 @@
 // React Flow org chart canvas with ProfileCard nodes and dagre layout
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactFlow, {
   Node,
   Edge,
@@ -22,19 +23,51 @@ import SquaresBackground from '../../../components/shared/SquaresBackground';
 
 import 'reactflow/dist/style.css';
 
-// Custom node component that wraps ProfileCard
+// Custom node component that wraps ProfileCard with animations
 const ProfileNode = ({ data, selected }: { data: Employee; selected?: boolean }) => {
   const { highlightState } = data;
+  const [isNewNode, setIsNewNode] = useState(false);
+  
+  // Check if this is a newly added node
+  useEffect(() => {
+    const nodeAge = Date.now() - new Date(data.lastUpdatedAt).getTime();
+    if (nodeAge < 3000) { // Consider nodes new for 3 seconds
+      setIsNewNode(true);
+      const timer = setTimeout(() => setIsNewNode(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [data.lastUpdatedAt]);
   
   return (
-    <div className={`org-chart-node ${selected ? 'selected' : ''}`}>
+    <motion.div 
+      className={`org-chart-node ${selected ? 'selected' : ''} ${isNewNode ? 'new-node' : ''}`}
+      initial={{ scale: isNewNode ? 0.8 : 1, opacity: isNewNode ? 0 : 1 }}
+      animate={{ 
+        scale: 1, 
+        opacity: 1,
+        boxShadow: isNewNode 
+          ? '0 0 30px rgba(234, 88, 12, 0.6), 0 0 60px rgba(234, 88, 12, 0.3)' 
+          : selected 
+            ? '0 4px 12px rgba(234, 88, 12, 0.2)' 
+            : '0 2px 8px rgba(0, 0, 0, 0.15)'
+      }}
+      transition={{ 
+        duration: 0.5, 
+        ease: 'easeOut',
+        boxShadow: { duration: isNewNode ? 2 : 0.3 }
+      }}
+      whileHover={{ 
+        y: -2, 
+        transition: { duration: 0.2 } 
+      }}
+    >
       <ProfileCard
         employee={data}
         size="medium"
         isHighlighted={highlightState.active}
         className="profile-node-card"
       />
-    </div>
+    </motion.div>
   );
 };
 
@@ -66,6 +99,10 @@ export const OrgChartCanvas: React.FC<OrgChartCanvasProps> = ({
   showBackground = true,
   allowInteraction = true,
 }) => {
+  const reactFlowInstance = useReactFlow();
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
   // Convert employees to hierarchical structure for dagre layout
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(() => {
     if (employees.length === 0) {
@@ -200,9 +237,87 @@ export const OrgChartCanvas: React.FC<OrgChartCanvasProps> = ({
     setEdges(layoutEdges);
   }, [layoutEdges, setEdges]);
 
+  // Keyboard navigation for canvas
+  const handleCanvasKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!allowInteraction || nodes.length === 0) return;
+
+      const currentIndex = selectedNodeId 
+        ? nodes.findIndex(node => node.id === selectedNodeId)
+        : -1;
+
+      switch (event.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          event.preventDefault();
+          const nextIndex = currentIndex < nodes.length - 1 ? currentIndex + 1 : 0;
+          const nextNode = nodes[nextIndex];
+          setSelectedNodeId(nextNode.id);
+          reactFlowInstance.fitView({ 
+            nodes: [nextNode], 
+            duration: 300,
+            padding: 0.3 
+          });
+          break;
+
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          event.preventDefault();
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : nodes.length - 1;
+          const prevNode = nodes[prevIndex];
+          setSelectedNodeId(prevNode.id);
+          reactFlowInstance.fitView({ 
+            nodes: [prevNode], 
+            duration: 300,
+            padding: 0.3 
+          });
+          break;
+
+        case 'Enter':
+        case ' ':
+          event.preventDefault();
+          if (selectedNodeId) {
+            const selectedNode = nodes.find(node => node.id === selectedNodeId);
+            if (selectedNode && onNodeClick) {
+              onNodeClick(selectedNode.data);
+            }
+          }
+          break;
+
+        case 'Home':
+          event.preventDefault();
+          if (nodes.length > 0) {
+            const firstNode = nodes[0];
+            setSelectedNodeId(firstNode.id);
+            reactFlowInstance.fitView({ 
+              nodes: [firstNode], 
+              duration: 300,
+              padding: 0.3 
+            });
+          }
+          break;
+
+        case 'End':
+          event.preventDefault();
+          if (nodes.length > 0) {
+            const lastNode = nodes[nodes.length - 1];
+            setSelectedNodeId(lastNode.id);
+            reactFlowInstance.fitView({ 
+              nodes: [lastNode], 
+              duration: 300,
+              padding: 0.3 
+            });
+          }
+          break;
+      }
+    },
+    [allowInteraction, nodes, selectedNodeId, reactFlowInstance, onNodeClick]
+  );
+
   // Handle node click events
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
       if (onNodeClick && node.data) {
         onNodeClick(node.data);
       }
@@ -260,24 +375,39 @@ export const OrgChartCanvas: React.FC<OrgChartCanvasProps> = ({
         </div>
       )}
       
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={allowInteraction ? onNodesChange : undefined}
-        onEdgesChange={allowInteraction ? onEdgesChange : undefined}
-        onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
-        onEdgeClick={handleEdgeClick}
-        nodeTypes={nodeTypes}
-        connectionMode={ConnectionMode.Strict}
-        fitView
-        fitViewOptions={{ padding: 0.1 }}
-        minZoom={0.1}
-        maxZoom={2}
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-        attributionPosition="bottom-left"
-        proOptions={{ hideAttribution: true }}
+      <div
+        ref={canvasRef}
+        tabIndex={0}
+        role="application"
+        aria-label={`Organization chart with ${nodes.length} employees. Use arrow keys to navigate, Enter to select.`}
+        onKeyDown={handleCanvasKeyDown}
+        style={{ 
+          height: '100%', 
+          outline: 'none',
+          position: 'relative' 
+        }}
       >
+        <ReactFlow
+          nodes={nodes.map(node => ({
+            ...node,
+            selected: node.id === selectedNodeId
+          }))}
+          edges={edges}
+          onNodesChange={allowInteraction ? onNodesChange : undefined}
+          onEdgesChange={allowInteraction ? onEdgesChange : undefined}
+          onNodeClick={handleNodeClick}
+          onNodeDoubleClick={handleNodeDoubleClick}
+          onEdgeClick={handleEdgeClick}
+          nodeTypes={nodeTypes}
+          connectionMode={ConnectionMode.Strict}
+          fitView
+          fitViewOptions={{ padding: 0.1 }}
+          minZoom={0.1}
+          maxZoom={2}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+          attributionPosition="bottom-left"
+          proOptions={{ hideAttribution: true }}
+        >
         {showBackground && (
           <Background
             gap={20}
@@ -310,7 +440,8 @@ export const OrgChartCanvas: React.FC<OrgChartCanvasProps> = ({
             maskColor="rgba(255, 255, 255, 0.8)"
           />
         )}
-      </ReactFlow>
+        </ReactFlow>
+      </div>
     </div>
   );
 };

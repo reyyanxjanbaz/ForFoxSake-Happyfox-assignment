@@ -1,6 +1,6 @@
 // Modal component for adding new employee nodes to the org chart
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { Employee } from '../state/employee';
 import { employeeApi, type EmployeeCreateRequest } from '../services/api';
 
@@ -51,6 +51,11 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<EmployeeFormData>>({});
+  
+  // Refs for focus management
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLInputElement>(null);
+  const lastFocusableRef = useRef<HTMLButtonElement>(null);
 
   // Update form field
   const updateField = useCallback((field: keyof EmployeeFormData, value: string | null) => {
@@ -125,10 +130,48 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
     onClose();
   }, [defaultManagerId, onClose]);
 
-  // Handle escape key
+  // Focus trap implementation
+  useEffect(() => {
+    if (isOpen) {
+      // Focus the first input when modal opens
+      setTimeout(() => {
+        firstFocusableRef.current?.focus();
+      }, 100);
+      
+      // Prevent background scrolling
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+      };
+    }
+  }, [isOpen]);
+
+  // Handle keyboard navigation and focus trap
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       handleClose();
+      return;
+    }
+    
+    // Focus trap logic
+    if (e.key === 'Tab') {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'input, select, button, [tabindex]:not([tabindex="-1"])'
+      );
+      
+      if (!focusableElements || focusableElements.length === 0) return;
+      
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
     }
   }, [handleClose]);
 
@@ -143,12 +186,20 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-employee-title"
+      aria-describedby="add-employee-description"
     >
-      <div className="modal-content">
+      <div 
+        ref={modalRef}
+        className="modal-content"
+        role="document"
+      >
         <div className="modal-header">
           <h2 id="add-employee-title" className="modal-title">
             Add New Employee
           </h2>
+          <p id="add-employee-description" className="sr-only">
+            Fill out the form below to add a new employee to the organization chart
+          </p>
           <button
             type="button"
             className="modal-close-button"
@@ -167,17 +218,19 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
               Full Name <span className="required">*</span>
             </label>
             <input
+              ref={firstFocusableRef}
               id="employee-name"
               type="text"
               className={`form-input ${errors.name ? 'error' : ''}`}
               value={formData.name}
               onChange={(e) => updateField('name', e.target.value)}
               placeholder="Enter employee's full name"
-              autoFocus
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? 'employee-name-error' : undefined}
               required
             />
             {errors.name && (
-              <span className="form-error" role="alert">
+              <span id="employee-name-error" className="form-error" role="alert" aria-live="polite">
                 {errors.name}
               </span>
             )}
@@ -279,11 +332,18 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
               Cancel
             </button>
             <button
+              ref={lastFocusableRef}
               type="submit"
               className="button button-primary"
               disabled={isSubmitting}
+              aria-describedby={isSubmitting ? 'submit-status' : undefined}
             >
               {isSubmitting ? 'Creating...' : 'Add Employee'}
+              {isSubmitting && (
+                <span id="submit-status" className="sr-only" aria-live="polite">
+                  Please wait, creating employee...
+                </span>
+              )}
             </button>
           </div>
         </form>
