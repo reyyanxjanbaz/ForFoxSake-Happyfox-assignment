@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: For Fox Sake Org Chart Mock API
+  version: 0.1.0
+servers:
+  - url: http://localhost:5173
+    description: MirageJS in-memory server (bootstrapped with Vite)
+paths:
+  /api/employees:
+    get:
+      summary: Retrieve all employees with hierarchy metadata
+      tags: [Employees]
+      responses:
+        '200':
+          description: List of employees ordered by tier
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeCollection'
+    post:
+      summary: Create a new employee node and insert into hierarchy
+      tags: [Employees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeCreateRequest'
+      responses:
+        '201':
+          description: Created employee with generated identifiers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+  /api/employees/{id}:
+    patch:
+      summary: Update an existing employee (designation, manager, tier)
+      tags: [Employees]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Employee identifier to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeUpdateRequest'
+      responses:
+        '200':
+          description: Updated employee payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '409':
+          description: Hierarchy validation failed (cycle detected)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Employee:
+      type: object
+      required:
+        [
+          id,
+          name,
+          designation,
+          tier,
+          team,
+          managerId,
+          photoAssetKey,
+          employeeId,
+          highlightState,
+          lastUpdatedAt,
+        ]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        designation:
+          type: string
+        tier:
+          type: string
+          enum: [executive, lead, manager, individual, intern]
+        team:
+          type: string
+        managerId:
+          type: string
+          nullable: true
+        employeeId:
+          type: string
+        photoAssetKey:
+          type: string
+        highlightState:
+          type: object
+          required: [active, reason]
+          properties:
+            active:
+              type: boolean
+            reason:
+              type: string
+              nullable: true
+              enum: [filter, drag, null]
+        lastUpdatedAt:
+          type: string
+          format: date-time
+    EmployeeCollection:
+      type: object
+      required: [data, hierarchy]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Employee'
+        hierarchy:
+          type: object
+          required: [roots, children, levels]
+          properties:
+            roots:
+              type: array
+              items:
+                type: string
+            children:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+            levels:
+              type: object
+              additionalProperties:
+                type: integer
+    EmployeeCreateRequest:
+      type: object
+      required: [name, designation, tier, team, managerId]
+      properties:
+        name:
+          type: string
+        designation:
+          type: string
+        tier:
+          type: string
+          enum: [executive, lead, manager, individual, intern]
+        team:
+          type: string
+        managerId:
+          type: string
+          nullable: true
+    EmployeeUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        designation:
+          type: string
+        tier:
+          type: string
+          enum: [executive, lead, manager, individual, intern]
+        team:
+          type: string
+        managerId:
+          type: string
+          nullable: true
+        highlightState:
+          $ref: '#/components/schemas/Employee/properties/highlightState'
+    Error:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+        message:
+          type: string
