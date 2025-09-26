@@ -1,6 +1,6 @@
 /* Global theme tokens and base styles */
 :root {
-  --color-white: #ffffff;
+  /* Orange palette */
   --color-orange-50: #fff7ed;
   --color-orange-100: #ffedd5;
   --color-orange-200: #fed7aa;
@@ -11,11 +11,78 @@
   --color-orange-700: #c2410c;
   --color-orange-800: #9a3412;
   --color-orange-900: #7c2d12;
+
+  /* Neutral palette */
+  --color-white: #ffffff;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* Semantic colors */
+  --color-primary: var(--color-orange-500);
+  --color-primary-hover: var(--color-orange-600);
+  --color-primary-light: var(--color-orange-100);
+  --color-secondary: var(--color-gray-600);
+  --color-background: var(--color-white);
+  --color-surface: var(--color-gray-50);
+  --color-border: var(--color-gray-200);
+  --color-text-primary: var(--color-gray-900);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-muted: var(--color-gray-400);
+
+  /* Highlight and interaction colors */
+  --color-highlight: var(--color-orange-400);
+  --color-highlight-glow: rgba(251, 146, 60, 0.6);
+  --color-focus: var(--color-orange-500);
+  --color-focus-ring: rgba(249, 115, 22, 0.2);
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Consolas", "Liberation Mono", "Menlo", monospace;
   
-  --font-sans: system-ui, -apple-system, "Segoe UI", "Roboto", sans-serif;
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Border radius */
   --border-radius: 8px;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+
+  /* Animation durations */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+
+  /* Layout dimensions */
+  --sidebar-width: 320px;
+  --sidebar-width-collapsed: 60px;
+  --node-width: 280px;
+  --node-height: 120px;
 }
 
 * {
@@ -26,9 +93,11 @@ body {
   margin: 0;
   padding: 0;
   font-family: var(--font-sans);
-  background-color: var(--color-white);
-  color: #1f2937;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
   line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
@@ -36,16 +105,131 @@ body {
   height: 100vh;
 }
 
-/* Basic layout grid for sidebar + chart */
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+/* Two-panel layout grid for sidebar + chart */
 .app-layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: 1fr;
   height: 100vh;
-  overflow: hidden;
+  background: var(--color-background);
+  transition: grid-template-columns var(--duration-normal) ease;
 }
 
 .app-layout.sidebar-collapsed {
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+}
+
+/* Sidebar Panel */
+.sidebar-panel {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Main Content Area */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--color-background);
+}
+
+/* Chart Canvas Container */
+.chart-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+/* Utility Classes */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Highlight pulse animation */
+@keyframes highlight-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 var(--color-highlight-glow);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 20px 5px var(--color-highlight-glow);
+    transform: scale(1.02);
+  }
+}
+
+.highlight-pulse {
+  animation: highlight-pulse 2s ease-in-out infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  
+  .sidebar-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  
+  :root {
+    --sidebar-width: 100%;
+    --sidebar-width-collapsed: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --space-4: 0.75rem;
+    --space-6: 1rem;
+    --space-8: 1.5rem;
+    --node-width: 240px;
+    --node-height: 100px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -57,6 +241,284 @@ body {
   .app-layout.sidebar-collapsed {
     grid-template-rows: 60px 1fr;
   }
+}
+
+/* =============================================================================
+   ORG CHART CANVAS STYLES
+   ============================================================================= */
+
+.org-chart-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.org-chart-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.org-chart-canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Custom node styling */
+.org-chart-node {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.org-chart-node.selected {
+  z-index: 100;
+}
+
+.org-chart-node .profile-node-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.org-chart-node.selected .profile-node-card {
+  border-color: var(--color-orange-500);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+}
+
+/* React Flow customizations */
+.react-flow__node {
+  border-radius: 8px;
+}
+
+.react-flow__edge {
+  z-index: 10;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2px;
+  stroke: var(--color-gray-300);
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--color-orange-500);
+  stroke-width: 3px;
+}
+
+.react-flow__controls {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls-button {
+  background: var(--color-white);
+  border: none;
+  border-bottom: 1px solid var(--color-gray-200);
+  color: var(--color-gray-600);
+  transition: all 0.2s ease;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--color-gray-50);
+  color: var(--color-orange-600);
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__minimap {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* =============================================================================
+   MODAL STYLES
+   ============================================================================= */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--color-white);
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 0;
+  border-bottom: 1px solid var(--color-gray-200);
+  margin-bottom: 24px;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  margin: 0 0 24px 0;
+}
+
+.modal-close-button {
+  background: none;
+  border: none;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-button:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+.modal-close-button:focus {
+  outline: 2px solid var(--color-orange-500);
+  outline-offset: 2px;
+}
+
+.modal-form {
+  padding: 0 24px 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+  margin-bottom: 6px;
+}
+
+.required {
+  color: var(--color-orange-600);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  background: var(--color-white);
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--color-orange-500);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+}
+
+.form-input.error,
+.form-select.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-error {
+  display: block;
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background: var(--color-orange-600);
+  color: var(--color-white);
+  border-color: var(--color-orange-600);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--color-orange-700);
+  border-color: var(--color-orange-700);
+}
+
+.button-primary:focus {
+  outline: 2px solid var(--color-orange-500);
+  outline-offset: 2px;
+}
+
+.button-secondary {
+  background: var(--color-white);
+  color: var(--color-gray-700);
+  border-color: var(--color-gray-300);
+}
+
+.button-secondary:hover:not(:disabled) {
+  background: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+}
+
+.button-secondary:focus {
+  outline: 2px solid var(--color-gray-500);
+  outline-offset: 2px;
 }
 
 /* Accessibility helpers */

@@ -29,10 +29,10 @@
 - [x] T016 Configure Mirage server in `src/mocks/server.ts` with models, factories, routes (GET/POST/PATCH) and seeded five-tier hierarchy.
 - [x] T017 Build API service wrapper in `src/features/org-chart/services/api.ts` (load, create, update employees, promotion logic on tier change).
 - [x] T018 Implement graph builder + layout in `src/features/org-chart/services/graphBuilder.ts` integrating `@dagrejs/dagre` for downward layout.
-- [ ] T019 Construct two-panel layout shell in `src/app/App.tsx` and `src/styles/globals.css` applying white/orange theme tokens and CSS grid.
-- [ ] T020 Create shared components `ProfileCard.tsx` and `SquaresBackground.tsx` in `src/components/shared/` with animated square backdrop and lazy-image slot.
-- [ ] T021 Implement sidebar tree (`src/components/sidebar/Sidebar.tsx` + styles) with collapsible groups, ARIA tree roles, and profile cards.
-- [ ] T022 Implement filter panel (`src/components/sidebar/FilterPanel.tsx`) with collapsible Framer Motion accordion, AND logic wiring, and clear controls.
+- [x] T019 Construct two-panel layout shell in `src/app/App.tsx` and `src/styles/globals.css` applying white/orange theme tokens and CSS grid.
+- [x] T020 Create shared components `ProfileCard.tsx` and `SquaresBackground.tsx` in `src/components/shared/` with animated square backdrop and lazy-image slot.
+- [x] T021 Implement sidebar tree (`src/components/sidebar/Sidebar.tsx` + styles) with collapsible groups, ARIA tree roles, and profile cards.
+- [x] T022 Implement filter panel (`src/components/sidebar/FilterPanel.tsx`) with collapsible Framer Motion accordion, AND logic wiring, and clear controls.
 - [ ] T023 Wire highlight orchestration hook in `src/features/org-chart/hooks/useHighlights.ts` to sync FilterState results to sidebar/chart pulses.
 - [ ] T024 Implement React Flow canvas component `src/components/chart/OrgChartCanvas.tsx` rendering profile card nodes, edges, minimap, controls, and responsive sizing.
 - [ ] T025 Implement drag/drop reassignment hook `src/features/org-chart/hooks/useDragReassign.ts` validating cycles, triggering PATCH, updating InteractionLog.
