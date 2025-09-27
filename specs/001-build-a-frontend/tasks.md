@@ -44,11 +44,11 @@
 
 - [x] T029 Implement accessibility pass: keyboard navigation for tree + canvas, focus traps in modal, ARIA labels in components touched above.
 - [x] T030 Add lazy-loading for photo assets and loading placeholders in `ProfileCard` + ensure Mirage seeds reference bundled images.
-- [ ] T031 Tune responsive breakpoints in `src/styles/globals.css` and layout components for tablet/mobile views.
-- [ ] T032 Run `npm run test` and `npm run lint` ensuring all suites (unit, integration, contract) pass and adjust configs as needed.
-- [ ] T033 Prepare deployment configs (`netlify.toml`, `vercel.json`, `package.json` deploy scripts) and document environment variables if any.
-- [ ] T034 Execute production build (`npm run build`), deploy to chosen host, capture public URL, and note demo video capture plan.
-- [ ] T035 Author root `README.md` detailing setup, testing, architecture decisions, deployment URL, and demo video link.
+- [x] T031 Tune responsive breakpoints in `src/styles/globals.css` and layout components for tablet/mobile views.
+- [x] T032 Run `npm run test` and `npm run lint` ensuring all suites (unit, integration, contract) pass and adjust configs as needed.
+- [x] T033 Prepare deployment configs (`netlify.toml`, `vercel.json`, `package.json` deploy scripts) and document environment variables if any.
+- [x] T034 Execute production build (`npm run build`), deploy to chosen host, capture public URL, and note demo video capture plan.
+- [x] T035 Author root `README.md` detailing setup, testing, architecture decisions, deployment URL, and demo video link.
 
 ## Dependencies
 

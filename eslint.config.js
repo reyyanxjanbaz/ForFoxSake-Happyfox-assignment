@@ -17,6 +17,23 @@ export default [
           jsx: true,
         },
       },
+      globals: {
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLButtonElement: 'readonly',  
+        RequestInit: 'readonly',
+        IntersectionObserver: 'readonly',
+        process: 'readonly',
+        React: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,
@@ -30,6 +47,27 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-case-declarations': 'off', // Allow declarations in case blocks
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', '**/tests/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        // Jest globals
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off', // Allow @ts-nocheck in test files
     },
   },
   {

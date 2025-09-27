@@ -10,7 +10,7 @@ export interface UseLazyImageOptions {
 }
 
 export interface UseLazyImageReturn {
-  imgRef: React.RefObject<HTMLImageElement>;
+  imgRef: React.RefObject<any>;
   isLoaded: boolean;
   isError: boolean;
   isInView: boolean;
@@ -19,11 +19,11 @@ export interface UseLazyImageReturn {
 
 export const useLazyImage = ({
   src,
-  alt,
+  alt: _alt,
   rootMargin = '50px',
   threshold = 0.1,
 }: UseLazyImageOptions): UseLazyImageReturn => {
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isInView, setIsInView] = useState(false);

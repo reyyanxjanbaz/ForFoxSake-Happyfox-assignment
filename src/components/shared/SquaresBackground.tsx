@@ -36,7 +36,7 @@ const SquaresBackground: React.FC<SquaresBackgroundProps> = ({
   className = '',
 }) => {
   const [squares, setSquares] = useState<Square[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [_dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // Generate squares on mount and window resize
   useEffect(() => {

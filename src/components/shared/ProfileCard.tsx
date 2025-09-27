@@ -1,6 +1,6 @@
 // ProfileCard component for displaying employee information in sidebar and chart nodes
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useLazyImage } from '../../hooks/useLazyImage';
 import type { Employee } from '../../features/org-chart/state/employee';
 
