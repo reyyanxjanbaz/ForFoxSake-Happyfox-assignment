@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useCallback, useEffect, useReducer } from 'react';
 import type { Employee } from '../state/employee';
 import type { FilterState } from '../state/filterState';
+import type { OrgHierarchy } from '../state/orgHierarchy';
+import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
 import { initialFilterState, updateFilterQuery, clearAllFilters } from '../state/filterState';
 import { employeeApi } from '../services/api';
 import { useHighlights } from '../hooks/useHighlights';
@@ -11,6 +13,7 @@ import { useDragAndDrop } from '../hooks/useDragAndDrop';
 // Combined application state
 export interface OrgChartState {
   employees: Employee[];
+  hierarchy: OrgHierarchy | null;
   filterState: FilterState;
   loading: boolean;
   error: string | null;
@@ -23,8 +26,10 @@ export type OrgChartAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'SET_EMPLOYEES'; payload: Employee[] }
+  | { type: 'SET_HIERARCHY'; payload: OrgHierarchy }
   | { type: 'UPDATE_EMPLOYEE'; payload: Employee }
   | { type: 'ADD_EMPLOYEE'; payload: Employee }
+  | { type: 'REMOVE_EMPLOYEES'; payload: string[] }
   | { type: 'UPDATE_FILTER'; payload: { field: 'name' | 'designation' | 'employeeId'; query: string } }
   | { type: 'CLEAR_FILTERS' }
   | { type: 'SET_SELECTED_EMPLOYEE'; payload: string | null }
@@ -34,6 +39,7 @@ export type OrgChartAction =
 // Initial state
 const initialState: OrgChartState = {
   employees: [],
+  hierarchy: null,
   filterState: initialFilterState,
   loading: false,
   error: null,
@@ -51,21 +57,48 @@ function orgChartReducer(state: OrgChartState, action: OrgChartAction): OrgChart
       return { ...state, error: action.payload };
     
     case 'SET_EMPLOYEES':
-      return { ...state, employees: action.payload };
+      return { 
+        ...state, 
+        employees: action.payload,
+        hierarchy: buildOrgHierarchy(action.payload),
+      };
+
+    case 'SET_HIERARCHY':
+      return { ...state, hierarchy: action.payload };
     
-    case 'UPDATE_EMPLOYEE':
+    case 'UPDATE_EMPLOYEE': {
+      const updatedEmployees = state.employees.map(emp =>
+        emp.id === action.payload.id ? action.payload : emp
+      );
       return {
         ...state,
-        employees: state.employees.map(emp =>
-          emp.id === action.payload.id ? action.payload : emp
-        ),
+        employees: updatedEmployees,
+        hierarchy: buildOrgHierarchy(updatedEmployees),
       };
+    }
     
-    case 'ADD_EMPLOYEE':
+    case 'ADD_EMPLOYEE': {
+      const newEmployees = [...state.employees, action.payload];
       return {
         ...state,
-        employees: [...state.employees, action.payload],
+        employees: newEmployees,
+        hierarchy: buildOrgHierarchy(newEmployees),
       };
+    }
+
+    case 'REMOVE_EMPLOYEES': {
+      const remainingEmployees = state.employees.filter(
+        employee => !action.payload.includes(employee.id)
+      );
+      return {
+        ...state,
+        employees: remainingEmployees,
+        hierarchy: buildOrgHierarchy(remainingEmployees),
+        selectedEmployeeId: action.payload.includes(state.selectedEmployeeId ?? '')
+          ? null
+          : state.selectedEmployeeId,
+      };
+    }
     
     case 'UPDATE_FILTER':
       return {
@@ -107,6 +140,7 @@ export interface OrgChartContextValue {
   loadEmployees: () => Promise<void>;
   updateEmployee: (employee: Employee) => Promise<void>;
   addEmployee: (employee: Employee) => void;
+  removeEmployeeBranch: (employeeId: string) => Promise<void>;
   
   // Filter operations
   updateFilter: (field: 'name' | 'designation' | 'employeeId', query: string) => void;
@@ -150,6 +184,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     try {
       const employeeCollection = await employeeApi.loadEmployees();
       dispatch({ type: 'SET_EMPLOYEES', payload: employeeCollection.data });
+      dispatch({ type: 'SET_HIERARCHY', payload: employeeCollection.hierarchy });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load employees';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
@@ -179,6 +214,21 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
   const addEmployee = useCallback((employee: Employee) => {
     dispatch({ type: 'ADD_EMPLOYEE', payload: employee });
   }, []);
+
+  const removeEmployeeBranch = useCallback(async (employeeId: string) => {
+    const hierarchy = buildOrgHierarchy(state.employees);
+    const descendantIds = getDescendants(employeeId, hierarchy);
+    const branchIds = [employeeId, ...descendantIds];
+
+    try {
+      await employeeApi.deleteEmployee(employeeId, { cascade: true });
+      dispatch({ type: 'REMOVE_EMPLOYEES', payload: branchIds });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete employee branch';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      throw error;
+    }
+  }, [state.employees]);
 
   // Filter operations
   const updateFilter = useCallback((field: 'name' | 'designation' | 'employeeId', query: string) => {
@@ -266,6 +316,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     loadEmployees,
     updateEmployee,
     addEmployee,
+    removeEmployeeBranch,
     updateFilter,
     clearFilters,
     selectEmployee,

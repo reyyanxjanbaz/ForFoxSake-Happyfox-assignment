@@ -4,7 +4,7 @@ import { createServer, Model, Factory, Response } from 'miragejs';
 import { faker } from '@faker-js/faker';
 import type { Employee } from '../features/org-chart/state/employee';
 import { generateOrgHierarchy } from '../features/org-chart/utils/dummyData';
-import { buildOrgHierarchy, detectCycle } from '../features/org-chart/state/orgHierarchy';
+import { buildOrgHierarchy, detectCycle, getDescendants } from '../features/org-chart/state/orgHierarchy';
 
 // MirageJS models
 const EmployeeModel = Model.extend({});
@@ -189,6 +189,45 @@ export function makeServer({ environment = 'development' } = {}) {
         
         employee.update(updatedAttrs);
         return new Response(200, {}, employee.attrs);
+      });
+
+      // DELETE /api/employees/:id - Delete employee (optionally cascade to descendants)
+      this.delete('/employees/:id', (schema, request) => {
+        const id = request.params.id;
+        const cascade = request.queryParams?.cascade === 'true';
+
+        const employee = schema.find('employee', id);
+        if (!employee) {
+          return new Response(404, {}, {
+            status: 'error',
+            message: 'Employee not found',
+          });
+        }
+
+        if (cascade) {
+          const employees = schema.db.employees as Employee[];
+          const hierarchy = buildOrgHierarchy(employees);
+          const descendantIds = getDescendants(id, hierarchy);
+          const branchIds = [id, ...descendantIds];
+
+          branchIds.forEach(employeeId => {
+            const target = schema.find('employee', employeeId);
+            target?.destroy();
+          });
+
+          return new Response(204);
+        }
+
+  const hasReports = (schema.db.employees as Employee[]).some((emp) => emp.managerId === id);
+        if (hasReports) {
+          return new Response(409, {}, {
+            status: 'error',
+            message: 'Cannot delete employee with direct reports. Use cascade delete to remove the entire branch.',
+          });
+        }
+
+        employee.destroy();
+        return new Response(204);
       });
 
       // Handle CORS for development

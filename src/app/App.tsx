@@ -1,20 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ReactFlowProvider } from 'reactflow';
 import OrgChartProvider, { useOrgChart } from '../features/org-chart/context/OrgChartProvider';
 import Sidebar from '../components/sidebar/Sidebar';
-import FilterPanel from '../components/sidebar/FilterPanel';
+import FilterPanel, { type FilterCriteria } from '../components/sidebar/FilterPanel';
 import OrgChartCanvas from '../features/org-chart/components/OrgChartCanvas';
 import AddNodeModal from '../features/org-chart/components/AddNodeModal';
+import type { Employee } from '../features/org-chart/state/employee';
 import '../styles/globals.css';
 
 // Wrapper component that connects to context
 function OrgChartCanvasWrapper() {
-  const { state } = useOrgChart();
+  const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch } = useOrgChart();
+
+  const handleDeleteBranch = useCallback((employeeId: string) => {
+    const targetEmployee = state.employees.find(emp => emp.id === employeeId);
+    const displayName = targetEmployee?.name ?? 'this employee';
+    const confirmed = typeof window === 'undefined'
+      ? true
+      : window.confirm(`Delete ${displayName}'s branch? This will remove all direct and indirect reports.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    void removeEmployeeBranch(employeeId).catch(error => {
+      console.error('Failed to delete branch', error);
+      if (typeof window !== 'undefined') {
+        window.alert('Failed to delete branch. Please try again.');
+      }
+    });
+  }, [removeEmployeeBranch, state.employees]);
 
   return (
     <OrgChartCanvas
       employees={state.employees}
+      hierarchy={state.hierarchy}
+      highlightedEmployeeIds={highlightedEmployeeIds}
+      selectedEmployeeId={state.selectedEmployeeId}
+      onSelectEmployee={selectEmployee}
+      onDeleteBranch={handleDeleteBranch}
       showMiniMap={true}
       showControls={true}
       showBackground={true}
@@ -23,9 +48,53 @@ function OrgChartCanvasWrapper() {
   );
 }
 
+// Wrapper component to provide sidebar data from context
+function SidebarWrapper({ onAddEmployee }: { onAddEmployee: () => void }) {
+  const { state, selectEmployee, highlightedEmployeeIds } = useOrgChart();
+
+  const handleEmployeeClick = (employee: Employee) => {
+    selectEmployee(employee.id);
+  };
+
+  return (
+    <Sidebar
+      employees={state.employees}
+      hierarchy={state.hierarchy || undefined}
+      highlightedEmployees={highlightedEmployeeIds}
+      onEmployeeClick={handleEmployeeClick}
+      onAddEmployee={onAddEmployee}
+      selectedEmployeeId={state.selectedEmployeeId}
+    />
+  );
+}
+
+// Wrapper component to connect filter panel to context state
+function FilterPanelWrapper() {
+  const { state, updateFilter, clearFilters } = useOrgChart();
+
+  const handleFilterChange = (criteria: FilterCriteria, changedField: keyof FilterCriteria) => {
+    if (changedField === 'name') {
+      updateFilter('name', criteria.name);
+    } else if (changedField === 'designation') {
+      updateFilter('designation', criteria.designation);
+    } else if (changedField === 'employeeId') {
+      updateFilter('employeeId', criteria.employeeId);
+    }
+  };
+
+  return (
+    <FilterPanel
+      employees={state.employees}
+      filterState={state.filterState}
+      onFilterChange={handleFilterChange}
+      onClearFilters={clearFilters}
+    />
+  );
+}
+
 // Wrapper for AddNodeModal that provides managers from context
 function AddNodeModalWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { state } = useOrgChart();
+  const { state, addEmployee, selectEmployee } = useOrgChart();
   
   // Filter employees who can be managers (executives, leads, managers)
   const managers = state.employees.filter(emp => 
@@ -37,6 +106,10 @@ function AddNodeModalWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: ()
       isOpen={isOpen}
       onClose={onClose}
       managers={managers}
+      onEmployeeAdded={(employee) => {
+        addEmployee(employee);
+        selectEmployee(employee.id);
+      }}
     />
   );
 }
@@ -162,12 +235,12 @@ function App() {
 
                 {/* Filter Panel */}
                 <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
-                  <FilterPanel />
+                  <FilterPanelWrapper />
                 </div>
 
                 {/* Sidebar Tree */}
                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <Sidebar />
+                  <SidebarWrapper onAddEmployee={handleAddEmployee} />
                 </div>
               </div>
             )}

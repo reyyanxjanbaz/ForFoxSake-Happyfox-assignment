@@ -10,6 +10,8 @@ export interface SidebarProps {
   hierarchy?: EmployeeCollection['hierarchy'];
   highlightedEmployees?: string[];
   onEmployeeClick?: (employee: Employee) => void;
+  onAddEmployee?: () => void;
+  selectedEmployeeId?: string | null;
   className?: string;
 }
 
@@ -25,10 +27,64 @@ const Sidebar: React.FC<SidebarProps> = ({
   hierarchy,
   highlightedEmployees = [],
   onEmployeeClick,
+  onAddEmployee,
+  selectedEmployeeId = null,
   className = '',
 }) => {
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // Automatically expand roots and first-level children when hierarchy updates for the first time
+  useEffect(() => {
+    if (!hierarchy) return;
+
+    setExpandedNodes(prev => {
+      if (prev.size > 0) {
+        return prev;
+      }
+
+      const initial = new Set<string>();
+      hierarchy.roots.forEach(rootId => {
+        initial.add(rootId);
+        const childIds = hierarchy.children[rootId] || [];
+        childIds.forEach(childId => initial.add(childId));
+      });
+      return initial;
+    });
+  }, [hierarchy]);
+
+  // Ensure highlighted employees and their ancestors are expanded for visibility
+  useEffect(() => {
+    const idsToExpand = [
+      ...highlightedEmployees,
+      ...(selectedEmployeeId ? [selectedEmployeeId] : []),
+    ];
+
+    if (!hierarchy || idsToExpand.length === 0 || employees.length === 0) {
+      return;
+    }
+
+    const employeeMap = new Map<string, Employee>(employees.map(emp => [emp.id, emp]));
+
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+
+      idsToExpand.forEach(employeeId => {
+        let currentId: string | null | undefined = employeeId;
+        while (currentId) {
+          next.add(currentId);
+          const managerId: string | null | undefined = employeeMap.get(currentId)?.managerId;
+          currentId = managerId;
+        }
+      });
+
+      if (next.size === prev.size && Array.from(next).every(id => prev.has(id))) {
+        return prev;
+      }
+
+      return next;
+    });
+  }, [hierarchy, highlightedEmployees, employees, selectedEmployeeId]);
 
   // Build tree structure from employees and hierarchy
   useEffect(() => {
@@ -112,8 +168,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const renderTreeNode = (node: TreeNode): React.ReactElement => {
     const { employee, children, level } = node;
     const hasChildren = children.length > 0;
-    const isExpanded = expandedNodes.has(employee.id);
-    const isHighlighted = highlightedEmployees.includes(employee.id);
+    const isExpanded = expandedNodes.has(employee.id) || (expandedNodes.size === 0 && level < 2);
+  const isHighlighted = highlightedEmployees.includes(employee.id) || employee.id === selectedEmployeeId;
 
     const nodeStyle: React.CSSProperties = {
       marginLeft: `${level * 16}px`,
@@ -295,6 +351,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             cursor: 'pointer',
             transition: 'background-color var(--duration-fast) ease',
           }}
+          onClick={onAddEmployee}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
           }}

@@ -1,6 +1,6 @@
 // Filter panel component with Framer Motion accordion and AND logic
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Employee } from '../../features/org-chart/state/employee';
 import type { FilterState } from '../../features/org-chart/state/filterState';
@@ -14,7 +14,7 @@ export interface FilterCriteria {
 export interface FilterPanelProps {
   employees?: Employee[];
   filterState?: FilterState;
-  onFilterChange?: (criteria: FilterCriteria) => void;
+  onFilterChange?: (criteria: FilterCriteria, changedField: keyof FilterCriteria) => void;
   onClearFilters?: () => void;
   className?: string;
   isCollapsed?: boolean;
@@ -34,6 +34,26 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     designation: '',
     employeeId: '',
   });
+
+  // Keep local inputs in sync with external filter state
+  useEffect(() => {
+    if (!filterState) return;
+
+    setLocalFilters(prev => {
+      const nextFilters: FilterCriteria = {
+        name: filterState.nameQuery,
+        designation: filterState.designationQuery,
+        employeeId: filterState.employeeIdQuery,
+      };
+
+      const isDifferent =
+        prev.name !== nextFilters.name ||
+        prev.designation !== nextFilters.designation ||
+        prev.employeeId !== nextFilters.employeeId;
+
+      return isDifferent ? nextFilters : prev;
+    });
+  }, [filterState?.nameQuery, filterState?.designationQuery, filterState?.employeeIdQuery, filterState]);
 
   // Derive unique values for filter options
   const filterOptions = useMemo(() => {
@@ -55,16 +75,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }, [employees]);
 
   // Apply filters with debouncing
-  const applyFilters = useCallback((newFilters: FilterCriteria) => {
-    setLocalFilters(newFilters);
-    if (onFilterChange) {
-      onFilterChange(newFilters);
-    }
-  }, [onFilterChange]);
-
   const handleInputChange = (field: keyof FilterCriteria, value: string) => {
     const newFilters = { ...localFilters, [field]: value };
-    applyFilters(newFilters);
+    setLocalFilters(newFilters);
+    onFilterChange?.(newFilters, field);
   };
 
   const handleClearAll = () => {
@@ -79,7 +93,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     }
   };
 
-  const hasActiveFilters = Object.values(localFilters).some((value: any) => value && value.length > 0);
+  const hasActiveFilters = Object.values(localFilters).some((value) => value.trim().length > 0);
   const matchCount = filterState?.results?.length || 0;
 
   const panelStyle: React.CSSProperties = {

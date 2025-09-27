@@ -56,8 +56,18 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      const errorData = await response.json() as ApiError;
-      throw new Error(`API Error ${response.status}: ${errorData.message}`);
+      let errorMessage = `API Error ${response.status}`;
+      try {
+        const errorData = await response.json() as ApiError;
+        errorMessage = `${errorMessage}: ${errorData.message}`;
+      } catch {
+        // Ignore JSON parse errors for non-JSON responses
+      }
+      throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
     }
 
     return await response.json();
@@ -119,6 +129,19 @@ export const employeeApi = {
   ): Promise<Employee> {
     return this.updateEmployee(id, {
       highlightState: { active, reason },
+    });
+  },
+
+  // Delete employee (optionally cascading to team)
+  async deleteEmployee(id: string, options: { cascade?: boolean } = {}): Promise<void> {
+  const params = new globalThis.URLSearchParams();
+    if (options.cascade) {
+      params.set('cascade', 'true');
+    }
+
+    const query = params.toString();
+    await apiRequest<void>(`/employees/${id}${query ? `?${query}` : ''}`, {
+      method: 'DELETE',
     });
   },
 
@@ -252,6 +275,11 @@ export const employeeOperations = {
     }
     
     return path;
+  },
+
+  // Delete an employee branch (employee and all reports)
+  async deleteEmployeeBranch(employeeId: string): Promise<void> {
+    await employeeApi.deleteEmployee(employeeId, { cascade: true });
   },
 };
 

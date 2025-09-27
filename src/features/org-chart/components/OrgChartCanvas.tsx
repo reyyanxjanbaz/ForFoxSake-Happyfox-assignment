@@ -1,137 +1,100 @@
-// Simple React Flow org chart canvas based on user's example
-
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { ReactFlow, Node, Edge, applyNodeChanges, applyEdgeChanges, addEdge, Background, Controls, MiniMap } from 'reactflow';
-import type { Connection, EdgeChange, NodeChange } from 'reactflow';
+import React, { useMemo, useEffect, useState } from 'react';
+import { ReactFlow, Background, Controls, MiniMap, type Edge } from 'reactflow';
 import type { Employee } from '../state/employee';
+import type { OrgHierarchy } from '../state/orgHierarchy';
+import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
+import { buildOrgChart, updateNodeHighlights, type OrgChartNode } from '../services/graphBuilder';
+import OrgChartNodeComponent from './OrgChartNode';
 
 import 'reactflow/dist/style.css';
 
-// Create org chart nodes with hierarchical positioning
-const createOrgChartNodes = (employees: Employee[]): Node[] => {
-  // Group employees by tier for hierarchical layout
-  const tierBuckets: Record<Employee['tier'], Employee[]> = {
-    executive: [],
-    lead: [],
-    manager: [],
-    individual: [],
-    intern: [],
-  };
-
-  employees.forEach(emp => {
-    tierBuckets[emp.tier].push(emp);
-  });
-
-  const tierOrder: Employee['tier'][] = ['executive', 'lead', 'manager', 'individual', 'intern'];
-
-  const nodes: Node[] = [];
-  let yOffset = 50;
-
-  // Position each tier
-  tierOrder.forEach(tier => {
-    const tierEmployees = tierBuckets[tier];
-    if (tierEmployees.length === 0) return;
-    
-    const nodeWidth = 200;
-    const nodeSpacing = 50;
-    const totalWidth = tierEmployees.length * (nodeWidth + nodeSpacing) - nodeSpacing;
-    const startX = -totalWidth / 2;
-    
-    tierEmployees.forEach((employee, index) => {
-      nodes.push({
-        id: employee.id,
-        type: 'default',
-        position: { 
-          x: startX + index * (nodeWidth + nodeSpacing),
-          y: yOffset
-        },
-        data: { 
-          label: `${employee.name}\n${employee.designation}\n${employee.team}` 
-        },
-        style: {
-          background: employee.tier === 'executive' ? '#ff6b6b' : 
-                      employee.tier === 'manager' ? '#4ecdc4' : 
-                      employee.tier === 'lead' ? '#45b7d1' : 
-                      employee.tier === 'individual' ? '#96ceb4' : '#f39c12',
-          color: 'white',
-          border: '1px solid #222138',
-          width: nodeWidth,
-          fontSize: '12px',
-          textAlign: 'center',
-          borderRadius: '8px',
-          padding: '10px',
-        },
-      });
-    });
-    
-    yOffset += 150; // Space between tiers
-  });
-  
-  return nodes;
-};
-
-// Create edges based on manager relationships
-const createOrgChartEdges = (employees: Employee[]): Edge[] => {
-  const edges: Edge[] = [];
-  
-  employees.forEach((employee) => {
-    if (employee.managerId) {
-      edges.push({
-        id: `${employee.managerId}-${employee.id}`,
-        source: employee.managerId,
-        target: employee.id,
-        type: 'smoothstep',
-        animated: true,
-      });
-    }
-  });
-  
-  return edges;
+const nodeTypes = {
+  employee: OrgChartNodeComponent,
 };
 
 interface OrgChartCanvasProps {
   employees: Employee[];
+  hierarchy?: OrgHierarchy | null;
+  highlightedEmployeeIds?: string[];
+  selectedEmployeeId?: string | null;
+  onSelectEmployee?: (employeeId: string) => void;
+  onDeleteBranch?: (employeeId: string) => void;
   showMiniMap?: boolean;
   showControls?: boolean;
   showBackground?: boolean;
   allowInteraction?: boolean;
 }
 
-export default function OrgChartCanvas({ 
+export default function OrgChartCanvas({
   employees,
+  hierarchy,
+  highlightedEmployeeIds = [],
+  selectedEmployeeId = null,
+  onSelectEmployee,
+  onDeleteBranch,
   showMiniMap = true,
   showControls = true,
   showBackground = true,
-  allowInteraction = true 
+  allowInteraction = true,
 }: OrgChartCanvasProps) {
-  const memoizedNodes = useMemo(() => createOrgChartNodes(employees), [employees]);
-  const memoizedEdges = useMemo(() => createOrgChartEdges(employees), [employees]);
-  const flowKey = useMemo(() => employees.map(emp => emp.id).join('-'), [employees]);
+  const [nodes, setNodes] = useState<OrgChartNode[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
-  const [nodes, setNodes] = useState<Node[]>(memoizedNodes);
-  const [edges, setEdges] = useState<Edge[]>(memoizedEdges);
+  const employeeCollection = useMemo(() => {
+    const computedHierarchy = hierarchy ?? buildOrgHierarchy(employees);
+    return {
+      data: employees,
+      hierarchy: computedHierarchy,
+    };
+  }, [employees, hierarchy]);
+
+  const branchMemberIds = useMemo(() => {
+    if (!selectedEmployeeId) {
+      return new Set<string>();
+    }
+
+    const descendants = getDescendants(selectedEmployeeId, employeeCollection.hierarchy);
+    return new Set<string>([selectedEmployeeId, ...descendants]);
+  }, [selectedEmployeeId, employeeCollection]);
 
   useEffect(() => {
-    setNodes(memoizedNodes);
-    setEdges(memoizedEdges);
-  }, [memoizedNodes, memoizedEdges]);
+    if (!employees.length) {
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
 
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes(nodesSnapshot => applyNodeChanges(changes, nodesSnapshot)),
-    [],
-  );
-  
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges(edgesSnapshot => applyEdgeChanges(changes, edgesSnapshot)),
-    [],
-  );
-  
-  const onConnect = useCallback(
-    (params: Connection) => setEdges(edgesSnapshot => addEdge(params, edgesSnapshot)),
-    [],
-  );
+    const { nodes: layoutedNodes, edges: layoutedEdges } = buildOrgChart(employeeCollection);
 
-  if (memoizedNodes.length === 0) {
+    const preparedNodes = layoutedNodes.map((node) => ({
+      ...node,
+      draggable: false,
+      selectable: false,
+      data: {
+        ...node.data,
+        onSelect: onSelectEmployee,
+        onDeleteBranch,
+        isSelected: selectedEmployeeId === node.id,
+        isHighlighted: highlightedEmployeeIds.includes(node.id),
+        isBranchMember: branchMemberIds.has(node.id),
+      },
+    }));
+
+    setNodes(preparedNodes);
+    setEdges(layoutedEdges);
+  }, [employees, employeeCollection, onSelectEmployee, onDeleteBranch, selectedEmployeeId, highlightedEmployeeIds, branchMemberIds]);
+
+  useEffect(() => {
+    if (!nodes.length) return;
+    setNodes((currentNodes) => updateNodeHighlights(
+      currentNodes,
+      highlightedEmployeeIds,
+      selectedEmployeeId,
+      branchMemberIds
+    ));
+  }, [highlightedEmployeeIds, selectedEmployeeId, branchMemberIds, nodes.length]);
+
+  if (!employees.length) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-secondary)' }}>
         Loading org chart...
@@ -142,17 +105,21 @@ export default function OrgChartCanvas({
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
-        key={flowKey}
         nodes={nodes}
         edges={edges}
-        onNodesChange={allowInteraction ? onNodesChange : undefined}
-        onEdgesChange={allowInteraction ? onEdgesChange : undefined}
-        onConnect={allowInteraction ? onConnect : undefined}
+        nodeTypes={nodeTypes}
         fitView
+        nodesDraggable={false}
+        nodesConnectable={false}
+        panOnScroll
+        selectionOnDrag={false}
+        zoomOnScroll={allowInteraction}
+        zoomOnPinch={allowInteraction}
+        panOnDrag={allowInteraction}
       >
-        {showBackground && <Background />}
-        {showControls && <Controls />}
-        {showMiniMap && <MiniMap />}
+  {showBackground && <Background gap={24} size={1.5} />}
+        {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
+        {showMiniMap && <MiniMap nodeStrokeColor="#cbd5f5" nodeColor="#f8fafc" maskColor="rgba(15, 23, 42, 0.08)" />}
       </ReactFlow>
     </div>
   );

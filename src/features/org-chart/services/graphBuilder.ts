@@ -14,6 +14,10 @@ export interface OrgChartNode extends Node {
     employee: Employee;
     isHighlighted: boolean;
     tier: Employee['tier'];
+    isSelected?: boolean;
+    onSelect?: (employeeId: string) => void;
+    onDeleteBranch?: (employeeId: string) => void;
+    isBranchMember?: boolean;
   };
   sourcePosition?: Position;
   targetPosition?: Position;
@@ -70,6 +74,8 @@ export const buildNodes = (employees: Employee[]): OrgChartNode[] => {
         employee,
         isHighlighted: employee.highlightState.active,
         tier: employee.tier,
+        isSelected: false,
+        isBranchMember: false,
       },
       sourcePosition: 'bottom' as Position,
       targetPosition: 'top' as Position,
@@ -216,7 +222,9 @@ export const calculateGraphBounds = (nodes: OrgChartNode[]): { width: number; he
 // Update node highlights based on filter results
 export const updateNodeHighlights = (
   nodes: OrgChartNode[], 
-  highlightedEmployeeIds: string[]
+  highlightedEmployeeIds: string[],
+  selectedEmployeeId: string | null,
+  branchMemberIds: Set<string>
 ): OrgChartNode[] => {
   const highlightSet = new Set(highlightedEmployeeIds);
   
@@ -225,13 +233,20 @@ export const updateNodeHighlights = (
     data: {
       ...node.data,
       isHighlighted: highlightSet.has(node.id),
+      isSelected: selectedEmployeeId === node.id,
+      isBranchMember: branchMemberIds.has(node.id),
     },
     style: {
       ...node.style,
       boxShadow: highlightSet.has(node.id)
         ? '0 0 20px rgba(251, 146, 60, 0.6)'
         : '0 4px 6px rgba(0, 0, 0, 0.1)',
-      transform: highlightSet.has(node.id) ? 'scale(1.02)' : 'scale(1)',
+      transform: highlightSet.has(node.id) || selectedEmployeeId === node.id ? 'scale(1.02)' : 'scale(1)',
+      borderColor: selectedEmployeeId === node.id
+        ? '#EA580C'
+        : branchMemberIds.has(node.id)
+          ? '#FED7AA'
+          : node.style?.borderColor,
     },
   }));
 };
@@ -289,6 +304,8 @@ export const relayoutGraph = (
     data: {
       ...node.data,
       isHighlighted: highlightMap.get(node.id) || false,
+      isSelected: node.data.isSelected,
+      isBranchMember: node.data.isBranchMember,
     },
     style: {
       ...node.style,
