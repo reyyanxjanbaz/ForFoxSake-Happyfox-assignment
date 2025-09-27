@@ -44,6 +44,9 @@ const EmployeeFactory = Factory.extend({
     ];
     return faker.helpers.arrayElement(photoAssets);
   },
+  photoUrl() {
+    return null;
+  },
   highlightState() {
     return {
       active: false,
@@ -139,6 +142,7 @@ export function makeServer({ environment = 'development' } = {}) {
             'person-11', 'person-12', 'person-13', 'person-14', 'person-15',
             'person-16', 'person-17', 'person-18', 'person-19', 'person-20',
           ]),
+          photoUrl: null,
           highlightState: {
             active: false,
             reason: null,

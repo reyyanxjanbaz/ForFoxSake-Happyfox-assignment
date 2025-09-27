@@ -1,158 +1,200 @@
-// Dummy data generator using Faker for realistic employee data
+// Static dummy data curated by the user
 
-import { faker } from '@faker-js/faker';
 import type { Employee } from '../state/employee';
 
-// Tier-aware designation mappings
-const DESIGNATIONS_BY_TIER: Record<Employee['tier'], string[]> = {
-  'executive': ['Chief Executive Officer', 'President', 'Chief Operating Officer'],
-  'lead': ['Vice President', 'Senior Director', 'Chief Technology Officer', 'Chief Financial Officer'],
-  'manager': ['Director', 'Senior Manager', 'Department Head', 'Principal Engineer'],
-  'individual': ['Manager', 'Team Lead', 'Senior Developer', 'Product Manager', 'Senior Analyst'],
-  'intern': ['Developer', 'Analyst', 'Coordinator', 'Specialist', 'Associate'],
-};
+interface StaticEmployeeSeed {
+  id: string;
+  name: string;
+  designation: string;
+  team: string;
+  managerId: string | null;
+  tier: Employee['tier'];
+  photoUrl: string;
+}
 
-// Photo asset keys for deterministic image assignment
-const PHOTO_ASSETS = [
-  'person-01', 'person-02', 'person-03', 'person-04', 'person-05',
-  'person-06', 'person-07', 'person-08', 'person-09', 'person-10',
-  'person-11', 'person-12', 'person-13', 'person-14', 'person-15',
-  'person-16', 'person-17', 'person-18', 'person-19', 'person-20',
+const STATIC_EMPLOYEES: StaticEmployeeSeed[] = [
+  {
+    id: '1',
+    name: 'Alice Johnson',
+    designation: 'Chief Executive Officer',
+    team: 'Executive',
+    managerId: null,
+    tier: 'executive',
+    photoUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
+  },
+  {
+    id: '2',
+    name: 'Mark Hill',
+    designation: 'Chief Technology Officer',
+    team: 'Executive',
+    managerId: '1',
+    tier: 'executive',
+    photoUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+  },
+  {
+    id: '3',
+    name: 'Sophia Lee',
+    designation: 'Chief Marketing Officer',
+    team: 'Executive',
+    managerId: '1',
+    tier: 'executive',
+    photoUrl: 'https://randomuser.me/api/portraits/women/65.jpg',
+  },
+  {
+    id: '4',
+    name: 'David Kim',
+    designation: 'Engineering Manager',
+    team: 'Engineering',
+    managerId: '2',
+    tier: 'manager',
+    photoUrl: 'https://randomuser.me/api/portraits/men/46.jpg',
+  },
+  {
+    id: '5',
+    name: 'Emily Carter',
+    designation: 'Product Manager',
+    team: 'Product',
+    managerId: '3',
+    tier: 'manager',
+    photoUrl: 'https://randomuser.me/api/portraits/women/47.jpg',
+  },
+  {
+    id: '6',
+    name: 'James White',
+    designation: 'HR Manager',
+    team: 'Human Resources',
+    managerId: '1',
+    tier: 'manager',
+    photoUrl: 'https://randomuser.me/api/portraits/men/50.jpg',
+  },
+  {
+    id: '7',
+    name: 'Olivia Brown',
+    designation: 'Frontend Lead',
+    team: 'Engineering',
+    managerId: '4',
+    tier: 'lead',
+    photoUrl: 'https://randomuser.me/api/portraits/women/55.jpg',
+  },
+  {
+    id: '8',
+    name: 'Ethan Davis',
+    designation: 'Backend Lead',
+    team: 'Engineering',
+    managerId: '4',
+    tier: 'lead',
+    photoUrl: 'https://randomuser.me/api/portraits/men/60.jpg',
+  },
+  {
+    id: '9',
+    name: 'Sophia Green',
+    designation: 'Marketing Lead',
+    team: 'Marketing',
+    managerId: '5',
+    tier: 'lead',
+    photoUrl: 'https://randomuser.me/api/portraits/women/64.jpg',
+  },
+  {
+    id: '10',
+    name: 'Liam Wilson',
+    designation: 'Frontend Developer',
+    team: 'Engineering',
+    managerId: '7',
+    tier: 'individual',
+    photoUrl: 'https://randomuser.me/api/portraits/men/75.jpg',
+  },
+  {
+    id: '11',
+    name: 'Mia Thomas',
+    designation: 'Backend Developer',
+    team: 'Engineering',
+    managerId: '8',
+    tier: 'individual',
+    photoUrl: 'https://randomuser.me/api/portraits/women/77.jpg',
+  },
+  {
+    id: '12',
+    name: 'Noah Robinson',
+    designation: 'Marketing Specialist',
+    team: 'Marketing',
+    managerId: '9',
+    tier: 'individual',
+    photoUrl: 'https://randomuser.me/api/portraits/men/79.jpg',
+  },
+  {
+    id: '13',
+    name: 'Ava Martinez',
+    designation: 'Engineering Intern',
+    team: 'Engineering',
+    managerId: '10',
+    tier: 'intern',
+    photoUrl: 'https://randomuser.me/api/portraits/women/82.jpg',
+  },
+  {
+    id: '14',
+    name: 'Lucas Anderson',
+    designation: 'Marketing Intern',
+    team: 'Marketing',
+    managerId: '12',
+    tier: 'intern',
+    photoUrl: 'https://randomuser.me/api/portraits/men/83.jpg',
+  },
 ];
 
-// Generate a single employee with tier-appropriate designation
-export const generateEmployee = (
-  tier: Employee['tier'],
-  managerId: string | null = null,
-  seed?: string
+const mapSeedToEmployee = (seed: StaticEmployeeSeed, index: number): Employee => ({
+  id: seed.id,
+  name: seed.name,
+  designation: seed.designation,
+  tier: seed.tier,
+  team: seed.team,
+  managerId: seed.managerId,
+  photoAssetKey: null,
+  photoUrl: seed.photoUrl,
+  employeeId: `EMP${seed.id.toString().padStart(3, '0')}`,
+  highlightState: {
+    active: false,
+    reason: null,
+  },
+  lastUpdatedAt: new Date(Date.now() - index * 60000).toISOString(),
+});
+
+// Return deep-cloned employees so callers can mutate safely
+export const generateOrgHierarchy = (): Employee[] => {
+  return STATIC_EMPLOYEES.map((seed, index) => ({ ...mapSeedToEmployee(seed, index) }));
+};
+
+// Helper for creating a new employee when using the add-node modal
+export const createEmployeeForManager = (
+  managerId: string | null,
+  managerTier: Employee['tier'],
+  overrides: Partial<Pick<Employee, 'name' | 'designation' | 'team' | 'tier'>> = {}
 ): Employee => {
-  // Use seed for deterministic generation in tests
-  if (seed) {
-    faker.seed(parseInt(seed, 36));
-  }
+  const tierMapping: Record<Employee['tier'], Employee['tier']> = {
+    executive: 'lead',
+    lead: 'manager',
+    manager: 'individual',
+    individual: 'intern',
+    intern: 'intern',
+  };
 
-  const id = `emp_${faker.string.alphanumeric(8)}`;
-  const employeeId = `EMP${faker.string.numeric(4)}`;
-  const firstName = faker.person.firstName();
-  const lastName = faker.person.lastName();
-  const name = `${firstName} ${lastName}`;
-  
-  // Select designation based on tier
-  const tierDesignations = DESIGNATIONS_BY_TIER[tier] || DESIGNATIONS_BY_TIER['intern'];
-  const designation = faker.helpers.arrayElement(tierDesignations);
-  
-  // Assign photo asset deterministically based on ID
-  const photoIndex = parseInt(id.slice(-2), 36) % PHOTO_ASSETS.length;
-  const photoAssetKey = PHOTO_ASSETS[photoIndex];
-
-  // Generate team name
-  const team = faker.helpers.arrayElement([
-    'Engineering', 'Product', 'Design', 'Marketing', 'Sales', 
-    'Operations', 'Finance', 'HR', 'Legal'
-  ]);
+  const timestamp = Date.now();
+  const id = `custom-${timestamp}`;
+  const tier = overrides.tier || tierMapping[managerTier] || 'intern';
 
   return {
     id,
-    name,
-    designation,
+    name: overrides.name || 'New Team Member',
+    designation: overrides.designation || 'Team Member',
     tier,
-    team,
+    team: overrides.team || 'Unassigned',
     managerId,
-    photoAssetKey,
-    employeeId,
+    photoAssetKey: null,
+    photoUrl: null,
+    employeeId: `EMP${timestamp.toString().slice(-6)}`,
     highlightState: {
       active: false,
       reason: null,
     },
     lastUpdatedAt: new Date().toISOString(),
   };
-};
-
-// Generate employees for a specific tier with count
-export const generateEmployeesForTier = (
-  tier: Employee['tier'],
-  count: number,
-  managerIds: string[] = []
-): Employee[] => {
-  const employees: Employee[] = [];
-
-  for (let i = 0; i < count; i++) {
-    // Assign manager if available (round-robin distribution)
-    const managerId = managerIds.length > 0 
-      ? managerIds[i % managerIds.length] 
-      : null;
-
-    employees.push(generateEmployee(tier, managerId));
-  }
-
-  return employees;
-};
-
-// Generate a complete five-tier organizational hierarchy
-export const generateOrgHierarchy = (): Employee[] => {
-  const employees: Employee[] = [];
-
-  // Executive: CEO (1 person, no manager)
-  const executives = generateEmployeesForTier('executive', 1);
-  employees.push(...executives);
-
-  // Lead: VPs (3 people, report to CEO)
-  const ceoId = executives[0].id;
-  const leads = generateEmployeesForTier('lead', 3, [ceoId]);
-  employees.push(...leads);
-
-  // Manager: Directors (6 people, report to VPs)
-  const leadIds = leads.map(emp => emp.id);
-  const managers = generateEmployeesForTier('manager', 6, leadIds);
-  employees.push(...managers);
-
-  // Individual: Senior ICs (12 people, report to Directors)
-  const managerIds = managers.map(emp => emp.id);
-  const individuals = generateEmployeesForTier('individual', 12, managerIds);
-  employees.push(...individuals);
-
-  // Intern: Junior staff (20 people, report to Senior ICs)
-  const individualIds = individuals.map(emp => emp.id);
-  const interns = generateEmployeesForTier('intern', 20, individualIds);
-  employees.push(...interns);
-
-  return employees;
-};
-
-// Generate additional employees for a specific manager (for add-node functionality)
-export const generateEmployeeForManager = (
-  managerId: string,
-  managerTier: Employee['tier']
-): Employee => {
-  // New employee should be one tier below manager
-  const tierMapping: Record<Employee['tier'], Employee['tier']> = {
-    'executive': 'lead',
-    'lead': 'manager',
-    'manager': 'individual',
-    'individual': 'intern',
-    'intern': 'intern', // Bottom tier stays same
-  };
-
-  const newEmployeeTier = tierMapping[managerTier] || 'intern';
-  return generateEmployee(newEmployeeTier, managerId);
-};
-
-// Utility to reseed faker for consistent test data
-export const seedFakerForTesting = (seed: number = 12345): void => {
-  faker.seed(seed);
-};
-
-// Get random photo key (for manual employee creation)
-export const getRandomPhotoKey = (): string => {
-  return faker.helpers.arrayElement(PHOTO_ASSETS);
-};
-
-// Get designation options for a tier (for UI dropdowns)
-export const getDesignationsForTier = (tier: Employee['tier']): string[] => {
-  return DESIGNATIONS_BY_TIER[tier] || DESIGNATIONS_BY_TIER['intern'];
-};
-
-// Validate if a tier is valid
-export const isValidTier = (tier: string): tier is Employee['tier'] => {
-  return (Object.keys(DESIGNATIONS_BY_TIER) as Employee['tier'][]).includes(tier as Employee['tier']);
 };

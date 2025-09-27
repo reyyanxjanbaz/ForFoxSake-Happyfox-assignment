@@ -24,8 +24,16 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   className = '',
 }) => {
   // Lazy loading for profile photo
+  const photoSrc = employee.photoUrl
+    ? employee.photoUrl
+    : employee.photoAssetKey
+      ? (employee.photoAssetKey.startsWith('http')
+        ? employee.photoAssetKey
+        : `/assets/photos/${employee.photoAssetKey}.jpg`)
+      : undefined;
+
   const lazyImage = useLazyImage({
-    src: `/assets/photos/${employee.photoAssetKey}.jpg`,
+    src: photoSrc ?? '',
     alt: `${employee.name} profile photo`,
     rootMargin: '100px', // Start loading when 100px away from viewport
     threshold: 0.1,
@@ -182,7 +190,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     >
       {/* Avatar */}
       <div style={avatarStyle}>
-        {!lazyImage.isError ? (
+        {photoSrc && !lazyImage.isError ? (
           <>
             <img
               ref={lazyImage.imgRef}
@@ -227,7 +235,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
               </div>
             )}
           </>
-        ) : (
+  ) : (
           <div style={{
             width: '100%',
             height: '100%',

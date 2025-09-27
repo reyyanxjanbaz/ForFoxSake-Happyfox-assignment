@@ -7,7 +7,8 @@ export interface Employee {
   tier: 'executive' | 'lead' | 'manager' | 'individual' | 'intern';
   team: string;
   managerId: string | null;
-  photoAssetKey: string;
+  photoAssetKey: string | null;
+  photoUrl?: string | null;
   employeeId: string;
   highlightState: {
     active: boolean;
