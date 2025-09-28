@@ -89,6 +89,7 @@ function FilterPanelWrapper() {
       filterState={state.filterState}
       onFilterChange={handleFilterChange}
       onClearFilters={clearFilters}
+      isCollapsed
     />
   );
 }

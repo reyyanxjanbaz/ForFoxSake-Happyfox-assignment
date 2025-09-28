@@ -1,6 +1,6 @@
 // Highlight orchestration hook to sync FilterState results to sidebar/chart pulses
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Employee } from '../state/employee';
 import type { FilterState } from '../state/filterState';
 import { combineFilters } from '../state/filterState';
@@ -25,6 +25,7 @@ export const useHighlights = ({
   filterState,
   onEmployeeHighlight,
 }: UseHighlightsProps): UseHighlightsReturn => {
+  const previousFilterIdsRef = useRef<string[]>([]);
   
   // Calculate filtered employee IDs based on current filter state
   const filteredEmployeeIds = useMemo(() => {
@@ -39,19 +40,27 @@ export const useHighlights = ({
 
   // Sync filter highlights with parent component
   useEffect(() => {
-    if (onEmployeeHighlight && filteredEmployeeIds.length > 0) {
-      onEmployeeHighlight(filteredEmployeeIds, true, 'filter');
-    } else if (onEmployeeHighlight && filteredEmployeeIds.length === 0) {
-      // Clear filter highlights when no matches
-      const currentFilterHighlights = employees
-        .filter(emp => emp.highlightState.active && emp.highlightState.reason === 'filter')
-        .map(emp => emp.id);
-      
-      if (currentFilterHighlights.length > 0) {
-        onEmployeeHighlight(currentFilterHighlights, false, null);
-      }
+    if (!onEmployeeHighlight) {
+      previousFilterIdsRef.current = filteredEmployeeIds;
+      return;
     }
-  }, [filteredEmployeeIds, onEmployeeHighlight, employees]);
+
+  const previousIds = previousFilterIdsRef.current;
+  const nextSet = new Set(filteredEmployeeIds);
+
+    const idsToDeactivate = previousIds.filter(id => !nextSet.has(id));
+    if (idsToDeactivate.length > 0) {
+      onEmployeeHighlight(idsToDeactivate, false, null);
+    }
+
+    if (filteredEmployeeIds.length > 0) {
+      onEmployeeHighlight(filteredEmployeeIds, true, 'filter');
+    } else if (previousIds.length > 0) {
+      onEmployeeHighlight(previousIds, false, null);
+    }
+
+    previousFilterIdsRef.current = filteredEmployeeIds;
+  }, [filteredEmployeeIds, onEmployeeHighlight]);
 
   // Get all currently highlighted employee IDs
   const highlightedEmployeeIds = useMemo(() => {

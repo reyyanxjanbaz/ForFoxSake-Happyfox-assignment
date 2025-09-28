@@ -1,6 +1,6 @@
 // Filter panel component with Framer Motion accordion and AND logic
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Employee } from '../../features/org-chart/state/employee';
 import type { FilterState } from '../../features/org-chart/state/filterState';
@@ -75,11 +75,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   }, [employees]);
 
   // Apply filters with debouncing
-  const handleInputChange = (field: keyof FilterCriteria, value: string) => {
-    const newFilters = { ...localFilters, [field]: value };
-    setLocalFilters(newFilters);
-    onFilterChange?.(newFilters, field);
-  };
+  const handleInputChange = useCallback((field: keyof FilterCriteria, value: string) => {
+    setLocalFilters(prevFilters => {
+      const nextFilters = { ...prevFilters, [field]: value };
+      onFilterChange?.(nextFilters, field);
+      return nextFilters;
+    });
+  }, [onFilterChange]);
 
   const handleClearAll = () => {
     const clearedFilters: FilterCriteria = {

@@ -17,7 +17,7 @@ import {
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
-import { buildOrgChart, type OrgChartNode } from '../services/graphBuilder';
+import { buildOrgChart, type OrgChartNode, type DragCallbacks } from '../services/graphBuilder';
 import OrgChartNodeComponent from './OrgChartNode';
 import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
 
@@ -144,14 +144,26 @@ export default function OrgChartCanvas({
     return () => window.cancelAnimationFrame(frame);
   }, [reactFlowInstance, shouldRefit, nodes.length]);
 
-  useEffect(() => {
-    if (!employees.length) {
-      setNodes([]);
-      setEdges([]);
-      return;
+  const dragCallbacks = useMemo<DragCallbacks | undefined>(() => {
+    if (!dragAndDrop) {
+      return undefined;
     }
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = buildOrgChart({
+    return {
+      onDragStart: dragAndDrop.handleDragStart,
+      onDragOver: dragAndDrop.handleDragOver,
+      onDragLeave: dragAndDrop.handleDragLeave,
+      onDrop: dragAndDrop.handleDrop,
+      onDragEnd: dragAndDrop.handleDragEnd,
+    };
+  }, [dragAndDrop]);
+
+  const chart = useMemo(() => {
+    if (!employees.length) {
+      return { nodes: [], edges: [], size: { width: 0, height: 0 } };
+    }
+
+    return buildOrgChart({
       employees,
       hierarchy: effectiveHierarchy,
       highlightedEmployeeIds,
@@ -159,12 +171,8 @@ export default function OrgChartCanvas({
       branchMemberIds,
       onSelectEmployee,
       onDeleteBranch,
-      dragAndDrop,
+      dragCallbacks,
     });
-
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-    setShouldRefit(true);
   }, [
     employees,
     effectiveHierarchy,
@@ -173,9 +181,28 @@ export default function OrgChartCanvas({
     branchMemberIds,
     onSelectEmployee,
     onDeleteBranch,
-    dragAndDrop,
-    dragAndDrop?.dragState,
+    dragCallbacks,
   ]);
+
+  useEffect(() => {
+    setNodes(chart.nodes);
+    setEdges(chart.edges);
+  }, [chart]);
+
+  const dragState = dragAndDrop?.dragState;
+  const isDraggingEmployee = Boolean(dragState?.isDragging);
+
+  useEffect(() => {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          dragState,
+        },
+      })),
+    );
+  }, [dragState]);
 
   if (!employees.length) {
     return (
@@ -199,15 +226,21 @@ export default function OrgChartCanvas({
         onConnect={onConnect}
         nodesDraggable={false}
         nodesConnectable={false}
-        panOnScroll
+        panOnScroll={allowInteraction}
         selectionOnDrag={false}
         zoomOnScroll={allowInteraction}
         zoomOnPinch={allowInteraction}
-        panOnDrag={allowInteraction}
+        panOnDrag={allowInteraction && !isDraggingEmployee}
       >
         {showBackground && <Background gap={24} size={1.5} />}
         {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
-        {showMiniMap && <MiniMap nodeStrokeColor="#cbd5f5" nodeColor="#f8fafc" maskColor="rgba(15, 23, 42, 0.08)" />}
+        {showMiniMap && (
+          <MiniMap
+            nodeStrokeColor={(node) => (node.data?.isHighlighted ? '#fb923c' : '#1f2937')}
+            nodeColor={(node) => (node.data?.isHighlighted ? '#fde68a' : '#cbd5f5')}
+            maskColor="rgba(15, 23, 42, 0.12)"
+          />
+        )}
       </ReactFlow>
     </div>
   );

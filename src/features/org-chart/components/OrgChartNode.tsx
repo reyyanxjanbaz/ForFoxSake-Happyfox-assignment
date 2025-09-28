@@ -87,13 +87,13 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
       return;
     }
 
-    if (!onDragOver || !canAcceptDrop) {
+    if (!onDragOver) {
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = canAcceptDrop ? 'move' : 'none';
     onDragOver(employee.id);
   };
 
@@ -131,10 +131,12 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   };
 
   const showConnector = Boolean(employee.managerId);
-  const canDeleteBranch = Boolean(onDeleteBranch && employee.managerId);
+  const canDeleteBranch = Boolean(onDeleteBranch);
 
   const borderColorBase = isSelected
     ? 'var(--color-primary)'
+    : isHighlighted
+      ? '#fb923c'
     : isBranchMember
       ? 'var(--color-orange-300)'
       : 'var(--color-border)';
@@ -165,6 +167,12 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     return '0 12px 24px rgba(15, 23, 42, 0.08)';
   })();
 
+  const backgroundColor = isHighlighted
+    ? 'rgba(251, 146, 60, 0.18)'
+    : isBranchMember
+      ? 'rgba(254, 215, 170, 0.45)'
+      : 'var(--color-white)';
+
   return (
     <div style={containerStyle}>
       <Handle
@@ -179,7 +187,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           width: '100%',
           height: '100%',
           borderRadius: '16px',
-          background: isBranchMember ? 'rgba(254, 215, 170, 0.45)' : 'var(--color-white)',
+          background: backgroundColor,
           border: `2px solid ${borderColor}`,
           boxShadow,
           transition: 'all 0.2s ease',
@@ -188,6 +196,11 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           position: 'relative',
         }}
         onClick={handleSelect}
+        onMouseDown={(event) => {
+          if (onDragStart) {
+            event.stopPropagation();
+          }
+        }}
         role={onSelect ? 'button' : undefined}
         tabIndex={onSelect ? 0 : -1}
         onKeyDown={(event) => {
@@ -209,13 +222,14 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           <button
             type="button"
             onClick={handleDelete}
-            aria-label={`Delete ${employee.name}'s branch`}
+            aria-label={`Delete ${employee.name}`}
+            title={`Delete ${employee.name}'s branch`}
             style={{
               position: 'absolute',
               top: '8px',
               right: '8px',
-              width: '28px',
-              height: '28px',
+              width: '32px',
+              height: '32px',
               borderRadius: '999px',
               backgroundColor: 'rgba(15, 23, 42, 0.8)',
               color: 'var(--color-white)',
@@ -226,6 +240,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               justifyContent: 'center',
               fontSize: '0.85rem',
               transition: 'background-color 0.2s ease',
+              zIndex: 2,
+              boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
+              pointerEvents: 'auto',
             }}
             onMouseEnter={(event) => {
               event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';

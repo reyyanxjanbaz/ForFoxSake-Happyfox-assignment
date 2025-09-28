@@ -3,7 +3,6 @@ import { MarkerType, Position } from 'reactflow';
 import type { Edge, Node } from 'reactflow';
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
-import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
 import type { OrgChartNodeData } from '../components/OrgChartNode';
 
 const NODE_WIDTH = 280;
@@ -158,6 +157,14 @@ const computeTreeLayout = (employees: Employee[], hierarchy: OrgHierarchy): Layo
   };
 };
 
+export interface DragCallbacks {
+  onDragStart?: (employeeId: string) => void;
+  onDragOver?: (employeeId: string) => void;
+  onDragLeave?: () => void;
+  onDrop?: (employeeId: string) => Promise<boolean> | boolean | void;
+  onDragEnd?: () => void;
+}
+
 export interface BuildOrgChartParams {
   employees: Employee[];
   hierarchy: OrgHierarchy;
@@ -166,7 +173,7 @@ export interface BuildOrgChartParams {
   branchMemberIds?: Set<string>;
   onSelectEmployee?: (employeeId: string) => void;
   onDeleteBranch?: (employeeId: string) => void;
-  dragAndDrop?: UseDragAndDropReturn;
+  dragCallbacks?: DragCallbacks;
 }
 
 export interface BuildOrgChartResult {
@@ -209,7 +216,7 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
     branchMemberIds = new Set<string>(),
     onSelectEmployee,
     onDeleteBranch,
-    dragAndDrop,
+    dragCallbacks,
   } = params;
 
   if (!employees.length) {
@@ -243,12 +250,11 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
         isBranchMember: branchSet.has(employee.id),
         onSelect: onSelectEmployee,
         onDeleteBranch,
-        dragState: dragAndDrop?.dragState,
-        onDragStart: dragAndDrop?.handleDragStart,
-        onDragOver: dragAndDrop?.handleDragOver,
-        onDragLeave: dragAndDrop?.handleDragLeave,
-        onDrop: dragAndDrop?.handleDrop,
-        onDragEnd: dragAndDrop?.handleDragEnd,
+        onDragStart: dragCallbacks?.onDragStart,
+        onDragOver: dragCallbacks?.onDragOver,
+        onDragLeave: dragCallbacks?.onDragLeave,
+        onDrop: dragCallbacks?.onDrop,
+        onDragEnd: dragCallbacks?.onDragEnd,
       },
       style: {
         width: NODE_WIDTH,
