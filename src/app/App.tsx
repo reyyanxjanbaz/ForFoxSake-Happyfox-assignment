@@ -11,7 +11,7 @@ import '../styles/globals.css';
 
 // Wrapper component that connects to context
 function OrgChartCanvasWrapper() {
-  const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch } = useOrgChart();
+  const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, dragAndDrop } = useOrgChart();
 
   const handleDeleteBranch = useCallback((employeeId: string) => {
     const targetEmployee = state.employees.find(emp => emp.id === employeeId);
@@ -40,6 +40,7 @@ function OrgChartCanvasWrapper() {
       selectedEmployeeId={state.selectedEmployeeId}
       onSelectEmployee={selectEmployee}
       onDeleteBranch={handleDeleteBranch}
+  dragAndDrop={dragAndDrop}
       showMiniMap={true}
       showControls={true}
       showBackground={true}
@@ -115,7 +116,7 @@ function AddNodeModalWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 }
 
 function App() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);

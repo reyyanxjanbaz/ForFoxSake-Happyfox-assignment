@@ -1,107 +1,183 @@
-// Graph builder for React Flow using @dagrejs/dagre for hierarchical layout
-
-import * as dagre from '@dagrejs/dagre';
-import type { Node, Edge, Position, MarkerType } from 'reactflow';
+// Graph builder for React Flow with new tree layout and node/edge factories
+import { MarkerType, Position } from 'reactflow';
+import type { Edge, Node } from 'reactflow';
 import type { Employee } from '../state/employee';
-import type { EmployeeCollection } from '../services/api';
+import type { OrgHierarchy } from '../state/orgHierarchy';
+import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
+import type { OrgChartNodeData } from '../components/OrgChartNode';
 
-// React Flow node types
-export interface OrgChartNode extends Node {
-  id: string;
-  type: 'employee';
-  position: { x: number; y: number };
-  data: {
-    employee: Employee;
-    isHighlighted: boolean;
-    tier: Employee['tier'];
-    isSelected?: boolean;
-    onSelect?: (employeeId: string) => void;
-    onDeleteBranch?: (employeeId: string) => void;
-    isBranchMember?: boolean;
-  };
-  sourcePosition?: Position;
-  targetPosition?: Position;
+const NODE_WIDTH = 280;
+const NODE_HEIGHT = 160;
+const HORIZONTAL_SPACING = 80;
+const VERTICAL_SPACING = 160;
+const MARGIN_X = 48;
+const MARGIN_Y = 48;
+
+const EDGE_STYLE = {
+  stroke: '#94A3B8',
+  strokeWidth: 2,
+};
+
+export type OrgChartNode = Node<OrgChartNodeData>;
+
+interface LayoutResult {
+  positions: Map<string, { x: number; y: number }>;
+  width: number;
+  height: number;
 }
 
-// Layout configuration
-const LAYOUT_CONFIG = {
-  nodeWidth: 280,
-  nodeHeight: 120,
-  rankSeparation: 100, // Vertical spacing between tiers
-  nodeSeparation: 40,  // Horizontal spacing between nodes
-  edgeSeparation: 20,  // Spacing between edges
-  marginX: 50,
-  marginY: 50,
-};
+interface LayoutRange {
+  left: number;
+  right: number;
+}
 
-// Tier-based styling configuration
-const TIER_STYLES: Record<Employee['tier'], { color: string; borderColor: string; level: number }> = {
-  'executive': { color: '#FFF7ED', borderColor: '#FB923C', level: 0 },
-  'lead': { color: '#FFF7ED', borderColor: '#FB923C', level: 1 },
-  'manager': { color: '#FFFFFF', borderColor: '#D1D5DB', level: 2 },
-  'individual': { color: '#FFFFFF', borderColor: '#D1D5DB', level: 3 },
-  'intern': { color: '#F9FAFB', borderColor: '#D1D5DB', level: 4 },
-};
+const ensureChildrenMap = (employees: Employee[], hierarchy: OrgHierarchy): Map<string, string[]> => {
+  const map = new Map<string, string[]>();
 
-// Create dagre graph instance
-const createDagreGraph = () => {
-  const graph = new dagre.graphlib.Graph();
-  
-  // Configure graph
-  graph.setDefaultEdgeLabel(() => ({}));
-  graph.setGraph({
-    rankdir: 'TB', // Top-to-bottom direction
-    align: 'UL',   // Upper-left alignment
-    nodesep: LAYOUT_CONFIG.nodeSeparation,
-    ranksep: LAYOUT_CONFIG.rankSeparation,
-    marginx: LAYOUT_CONFIG.marginX,
-    marginy: LAYOUT_CONFIG.marginY,
+  employees.forEach((employee) => {
+    map.set(employee.id, []);
   });
 
-  return graph;
-};
-
-// Build React Flow nodes from employee data
-export const buildNodes = (employees: Employee[]): OrgChartNode[] => {
-  return employees.map((employee) => {
-    const tierStyle = TIER_STYLES[employee.tier];
-    
-    const node: OrgChartNode = {
-      id: employee.id,
-      type: 'employee',
-      position: { x: 0, y: 0 }, // Will be calculated by dagre
-      data: {
-        employee,
-        isHighlighted: employee.highlightState.active,
-        tier: employee.tier,
-        isSelected: false,
-        isBranchMember: false,
-      },
-      sourcePosition: 'bottom' as Position,
-      targetPosition: 'top' as Position,
-      style: {
-        width: LAYOUT_CONFIG.nodeWidth,
-        height: LAYOUT_CONFIG.nodeHeight,
-        backgroundColor: tierStyle.color,
-        border: `2px solid ${tierStyle.borderColor}`,
-        borderRadius: '12px',
-        padding: '16px',
-        boxShadow: employee.highlightState.active 
-          ? '0 0 20px rgba(251, 146, 60, 0.6)' 
-          : '0 4px 6px rgba(0, 0, 0, 0.1)',
-        transition: 'all 0.3s ease',
-      },
-    };
-
-    return node;
+  Object.entries(hierarchy.children).forEach(([parentId, childIds]) => {
+    const existing = map.get(parentId) ?? [];
+    map.set(parentId, [...existing, ...childIds]);
   });
+
+  return map;
 };
 
-// Build React Flow edges from hierarchy relationships
-export const buildEdges = (hierarchy: EmployeeCollection['hierarchy']): Edge[] => {
+const resolveRoots = (employees: Employee[], hierarchy: OrgHierarchy): string[] => {
+  if (hierarchy.roots.length > 0) {
+    return hierarchy.roots;
+  }
+
+  return employees
+    .filter((employee) => employee.managerId === null)
+    .map((employee) => employee.id);
+};
+
+const computeTreeLayout = (employees: Employee[], hierarchy: OrgHierarchy): LayoutResult => {
+  const childrenMap = ensureChildrenMap(employees, hierarchy);
+  const roots = resolveRoots(employees, hierarchy);
+  const visited = new Set<string>();
+  const positions = new Map<string, { x: number; y: number }>();
+
+  const slotWidth = NODE_WIDTH + HORIZONTAL_SPACING;
+  const levelHeight = NODE_HEIGHT + VERTICAL_SPACING;
+
+  let nextLeafIndex = 0;
+  let minCenter = Number.POSITIVE_INFINITY;
+  let maxCenter = Number.NEGATIVE_INFINITY;
+  let maxDepth = 0;
+
+  const assignNode = (nodeId: string, depth: number): LayoutRange => {
+    if (visited.has(nodeId)) {
+      const center = MARGIN_X + NODE_WIDTH / 2 + slotWidth * nextLeafIndex;
+      const x = center - NODE_WIDTH / 2;
+      const y = MARGIN_Y + depth * levelHeight;
+
+      positions.set(nodeId, { x, y });
+      nextLeafIndex += 1;
+      minCenter = Math.min(minCenter, center);
+      maxCenter = Math.max(maxCenter, center);
+      maxDepth = Math.max(maxDepth, depth);
+
+      return { left: center, right: center };
+    }
+
+    visited.add(nodeId);
+    maxDepth = Math.max(maxDepth, depth);
+
+    const childIds = childrenMap.get(nodeId) ?? [];
+
+    if (childIds.length === 0) {
+      const center = MARGIN_X + NODE_WIDTH / 2 + slotWidth * nextLeafIndex;
+      const x = center - NODE_WIDTH / 2;
+      const y = MARGIN_Y + depth * levelHeight;
+
+      positions.set(nodeId, { x, y });
+      nextLeafIndex += 1;
+      minCenter = Math.min(minCenter, center);
+      maxCenter = Math.max(maxCenter, center);
+
+      return { left: center, right: center };
+    }
+
+    let leftBoundary = Number.POSITIVE_INFINITY;
+    let rightBoundary = Number.NEGATIVE_INFINITY;
+
+    childIds.forEach((childId) => {
+      const range = assignNode(childId, depth + 1);
+      leftBoundary = Math.min(leftBoundary, range.left);
+      rightBoundary = Math.max(rightBoundary, range.right);
+    });
+
+    if (!Number.isFinite(leftBoundary) || !Number.isFinite(rightBoundary)) {
+      const center = MARGIN_X + NODE_WIDTH / 2 + slotWidth * nextLeafIndex;
+      const x = center - NODE_WIDTH / 2;
+      const y = MARGIN_Y + depth * levelHeight;
+
+      positions.set(nodeId, { x, y });
+      nextLeafIndex += 1;
+      minCenter = Math.min(minCenter, center);
+      maxCenter = Math.max(maxCenter, center);
+
+      return { left: center, right: center };
+    }
+
+    const center = (leftBoundary + rightBoundary) / 2;
+    const x = center - NODE_WIDTH / 2;
+    const y = MARGIN_Y + depth * levelHeight;
+
+    positions.set(nodeId, { x, y });
+    minCenter = Math.min(minCenter, leftBoundary, center);
+    maxCenter = Math.max(maxCenter, rightBoundary, center);
+
+    return { left: leftBoundary, right: rightBoundary };
+  };
+
+  roots.forEach((rootId, index) => {
+    assignNode(rootId, 0);
+    if (index < roots.length - 1) {
+      nextLeafIndex += 1; // Spacer between root clusters
+    }
+  });
+
+  if (!Number.isFinite(minCenter) || !Number.isFinite(maxCenter)) {
+    minCenter = MARGIN_X + NODE_WIDTH / 2;
+    maxCenter = minCenter + slotWidth;
+  }
+
+  const totalWidth = (maxCenter - minCenter) + NODE_WIDTH + MARGIN_X * 2;
+  const totalHeight = MARGIN_Y * 2 + (maxDepth + 1) * NODE_HEIGHT + maxDepth * VERTICAL_SPACING;
+
+  return {
+    positions,
+    width: totalWidth,
+    height: totalHeight,
+  };
+};
+
+export interface BuildOrgChartParams {
+  employees: Employee[];
+  hierarchy: OrgHierarchy;
+  highlightedEmployeeIds?: string[];
+  selectedEmployeeId?: string | null;
+  branchMemberIds?: Set<string>;
+  onSelectEmployee?: (employeeId: string) => void;
+  onDeleteBranch?: (employeeId: string) => void;
+  dragAndDrop?: UseDragAndDropReturn;
+}
+
+export interface BuildOrgChartResult {
+  nodes: OrgChartNode[];
+  edges: Edge[];
+  size: { width: number; height: number };
+}
+
+const buildEdgesFromHierarchy = (hierarchy: OrgHierarchy): Edge[] => {
   const edges: Edge[] = [];
 
-  // Create edges from parent to children
   Object.entries(hierarchy.children).forEach(([parentId, childIds]) => {
     childIds.forEach((childId) => {
       edges.push({
@@ -110,15 +186,12 @@ export const buildEdges = (hierarchy: EmployeeCollection['hierarchy']): Edge[] =
         target: childId,
         type: 'smoothstep',
         animated: false,
-        style: {
-          stroke: '#94A3B8',
-          strokeWidth: 2,
-        },
+        style: EDGE_STYLE,
         markerEnd: {
-          type: 'arrow' as MarkerType,
-          color: '#94A3B8',
-          width: 20,
-          height: 20,
+          type: MarkerType.ArrowClosed,
+          color: EDGE_STYLE.stroke,
+          width: 18,
+          height: 18,
         },
       });
     });
@@ -127,197 +200,72 @@ export const buildEdges = (hierarchy: EmployeeCollection['hierarchy']): Edge[] =
   return edges;
 };
 
-// Apply dagre layout to nodes
-export const applyDagreLayout = (
-  nodes: OrgChartNode[], 
-  edges: Edge[]
-): { nodes: OrgChartNode[]; edges: Edge[] } => {
-  const graph = createDagreGraph();
+export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult => {
+  const {
+    employees,
+    hierarchy,
+    highlightedEmployeeIds = [],
+    selectedEmployeeId = null,
+    branchMemberIds = new Set<string>(),
+    onSelectEmployee,
+    onDeleteBranch,
+    dragAndDrop,
+  } = params;
 
-  // Add nodes to dagre graph
-  nodes.forEach((node) => {
-    graph.setNode(node.id, {
-      width: LAYOUT_CONFIG.nodeWidth,
-      height: LAYOUT_CONFIG.nodeHeight,
-    });
-  });
+  if (!employees.length) {
+    return { nodes: [], edges: [], size: { width: 0, height: 0 } };
+  }
 
-  // Add edges to dagre graph
-  edges.forEach((edge) => {
-    graph.setEdge(edge.source, edge.target);
-  });
+  const highlightSet = new Set(highlightedEmployeeIds);
+  const branchSet = branchMemberIds;
 
-  // Calculate layout
-  dagre.layout(graph);
+  const { positions, width, height } = computeTreeLayout(employees, hierarchy);
+  const edges = buildEdgesFromHierarchy(hierarchy);
 
-  // Apply calculated positions to nodes
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = graph.node(node.id);
-    
+  const nodes: OrgChartNode[] = employees.map((employee) => {
+    const position = positions.get(employee.id) ?? { x: MARGIN_X, y: MARGIN_Y };
+
     return {
-      ...node,
-      position: {
-        x: nodeWithPosition.x - LAYOUT_CONFIG.nodeWidth / 2,
-        y: nodeWithPosition.y - LAYOUT_CONFIG.nodeHeight / 2,
+      id: employee.id,
+      type: 'employee',
+      position,
+      positionAbsolute: position,
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      draggable: false,
+      selectable: false,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
+      data: {
+        employee,
+        isHighlighted: highlightSet.has(employee.id),
+        isSelected: selectedEmployeeId === employee.id,
+        isBranchMember: branchSet.has(employee.id),
+        onSelect: onSelectEmployee,
+        onDeleteBranch,
+        dragState: dragAndDrop?.dragState,
+        onDragStart: dragAndDrop?.handleDragStart,
+        onDragOver: dragAndDrop?.handleDragOver,
+        onDragLeave: dragAndDrop?.handleDragLeave,
+        onDrop: dragAndDrop?.handleDrop,
+        onDragEnd: dragAndDrop?.handleDragEnd,
+      },
+      style: {
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        padding: 0,
+        background: 'transparent',
+        border: 'none',
       },
     };
   });
 
   return {
-    nodes: layoutedNodes,
+    nodes,
     edges,
-  };
-};
-
-// Main function to build complete graph from employee data
-export const buildOrgChart = (employeeData: EmployeeCollection): {
-  nodes: OrgChartNode[];
-  edges: Edge[];
-  bounds: { width: number; height: number };
-} => {
-  // Build initial nodes and edges
-  const nodes = buildNodes(employeeData.data);
-  const edges = buildEdges(employeeData.hierarchy);
-  
-  // Apply dagre layout
-  const { nodes: layoutedNodes, edges: layoutedEdges } = applyDagreLayout(nodes, edges);
-  
-  // Calculate bounding box for the entire graph
-  const bounds = calculateGraphBounds(layoutedNodes);
-  
-  return {
-    nodes: layoutedNodes,
-    edges: layoutedEdges,
-    bounds,
-  };
-};
-
-// Calculate graph bounding box
-export const calculateGraphBounds = (nodes: OrgChartNode[]): { width: number; height: number } => {
-  if (nodes.length === 0) {
-    return { width: 800, height: 600 };
-  }
-
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-
-  nodes.forEach((node) => {
-    const x = node.position.x;
-    const y = node.position.y;
-    
-    minX = Math.min(minX, x);
-    maxX = Math.max(maxX, x + LAYOUT_CONFIG.nodeWidth);
-    minY = Math.min(minY, y);
-    maxY = Math.max(maxY, y + LAYOUT_CONFIG.nodeHeight);
-  });
-
-  return {
-    width: maxX - minX + LAYOUT_CONFIG.marginX * 2,
-    height: maxY - minY + LAYOUT_CONFIG.marginY * 2,
-  };
-};
-
-// Update node highlights based on filter results
-export const updateNodeHighlights = (
-  nodes: OrgChartNode[], 
-  highlightedEmployeeIds: string[],
-  selectedEmployeeId: string | null,
-  branchMemberIds: Set<string>
-): OrgChartNode[] => {
-  const highlightSet = new Set(highlightedEmployeeIds);
-  
-  return nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      isHighlighted: highlightSet.has(node.id),
-      isSelected: selectedEmployeeId === node.id,
-      isBranchMember: branchMemberIds.has(node.id),
+    size: {
+      width,
+      height,
     },
-    style: {
-      ...node.style,
-      boxShadow: highlightSet.has(node.id)
-        ? '0 0 20px rgba(251, 146, 60, 0.6)'
-        : '0 4px 6px rgba(0, 0, 0, 0.1)',
-      transform: highlightSet.has(node.id) || selectedEmployeeId === node.id ? 'scale(1.02)' : 'scale(1)',
-      borderColor: selectedEmployeeId === node.id
-        ? '#EA580C'
-        : branchMemberIds.has(node.id)
-          ? '#FED7AA'
-          : node.style?.borderColor,
-    },
-  }));
-};
-
-// Find node by employee ID
-export const findNodeByEmployeeId = (
-  nodes: OrgChartNode[], 
-  employeeId: string
-): OrgChartNode | undefined => {
-  return nodes.find(node => node.id === employeeId);
-};
-
-// Get nodes by tier
-export const getNodesByTier = (
-  nodes: OrgChartNode[], 
-  tier: Employee['tier']
-): OrgChartNode[] => {
-  return nodes.filter(node => node.data.tier === tier);
-};
-
-// Calculate center position for focusing viewport
-export const calculateCenterPosition = (nodes: OrgChartNode[]): { x: number; y: number } => {
-  if (nodes.length === 0) {
-    return { x: 0, y: 0 };
-  }
-
-  const bounds = calculateGraphBounds(nodes);
-  return {
-    x: bounds.width / 2,
-    y: bounds.height / 2,
-  };
-};
-
-// Re-layout graph after structural changes (add/remove nodes)
-export const relayoutGraph = (
-  currentNodes: OrgChartNode[], 
-  currentEdges: Edge[], 
-  employeeData: EmployeeCollection
-): {
-  nodes: OrgChartNode[];
-  edges: Edge[];
-  bounds: { width: number; height: number };
-} => {
-  // Preserve highlight states from current nodes
-  const highlightMap = new Map(
-    currentNodes.map(node => [node.id, node.data.isHighlighted])
-  );
-  
-  // Build fresh graph
-  const { nodes, edges, bounds } = buildOrgChart(employeeData);
-  
-  // Restore highlight states
-  const restoredNodes = nodes.map(node => ({
-    ...node,
-    data: {
-      ...node.data,
-      isHighlighted: highlightMap.get(node.id) || false,
-      isSelected: node.data.isSelected,
-      isBranchMember: node.data.isBranchMember,
-    },
-    style: {
-      ...node.style,
-      boxShadow: highlightMap.get(node.id)
-        ? '0 0 20px rgba(251, 146, 60, 0.6)'
-        : '0 4px 6px rgba(0, 0, 0, 0.1)',
-    },
-  }));
-  
-  return {
-    nodes: restoredNodes,
-    edges,
-    bounds,
   };
 };

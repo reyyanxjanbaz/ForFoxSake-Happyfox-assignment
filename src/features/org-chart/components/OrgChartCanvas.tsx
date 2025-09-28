@@ -1,10 +1,25 @@
-import React, { useMemo, useEffect, useState } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, type Edge } from 'reactflow';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  MarkerType,
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type NodeChange,
+  type ReactFlowInstance,
+} from 'reactflow';
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
-import { buildOrgChart, updateNodeHighlights, type OrgChartNode } from '../services/graphBuilder';
+import { buildOrgChart, type OrgChartNode } from '../services/graphBuilder';
 import OrgChartNodeComponent from './OrgChartNode';
+import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
 
 import 'reactflow/dist/style.css';
 
@@ -19,6 +34,7 @@ interface OrgChartCanvasProps {
   selectedEmployeeId?: string | null;
   onSelectEmployee?: (employeeId: string) => void;
   onDeleteBranch?: (employeeId: string) => void;
+  dragAndDrop?: UseDragAndDropReturn;
   showMiniMap?: boolean;
   showControls?: boolean;
   showBackground?: boolean;
@@ -32,6 +48,7 @@ export default function OrgChartCanvas({
   selectedEmployeeId = null,
   onSelectEmployee,
   onDeleteBranch,
+  dragAndDrop,
   showMiniMap = true,
   showControls = true,
   showBackground = true,
@@ -39,23 +56,93 @@ export default function OrgChartCanvas({
 }: OrgChartCanvasProps) {
   const [nodes, setNodes] = useState<OrgChartNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [shouldRefit, setShouldRefit] = useState(false);
 
-  const employeeCollection = useMemo(() => {
-    const computedHierarchy = hierarchy ?? buildOrgHierarchy(employees);
-    return {
-      data: employees,
-      hierarchy: computedHierarchy,
-    };
-  }, [employees, hierarchy]);
+  const effectiveHierarchy = useMemo(
+    () => hierarchy ?? buildOrgHierarchy(employees),
+    [employees, hierarchy],
+  );
+
+  const layoutKey = useMemo(() => {
+    if (!employees.length) {
+      return 'empty';
+    }
+
+    const serializedIds = employees.map(emp => emp.id).join('-');
+    const serializedHierarchy = Object.entries(effectiveHierarchy.children)
+      .map(([parentId, childIds]) => `${parentId}:${childIds.join(',')}`)
+      .join('|');
+
+    return `${serializedIds}|${serializedHierarchy}`;
+  }, [employees, effectiveHierarchy]);
 
   const branchMemberIds = useMemo(() => {
     if (!selectedEmployeeId) {
       return new Set<string>();
     }
 
-    const descendants = getDescendants(selectedEmployeeId, employeeCollection.hierarchy);
+    const descendants = getDescendants(selectedEmployeeId, effectiveHierarchy);
     return new Set<string>([selectedEmployeeId, ...descendants]);
-  }, [selectedEmployeeId, employeeCollection]);
+  }, [selectedEmployeeId, effectiveHierarchy]);
+
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      type: 'smoothstep' as const,
+      animated: false,
+      style: { stroke: '#94A3B8', strokeWidth: 2 },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: '#94A3B8',
+        width: 18,
+        height: 18,
+      },
+    }),
+    [],
+  );
+
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) =>
+      setNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
+    [],
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) =>
+      setEdges((currentEdges) => applyEdgeChanges(changes, currentEdges)),
+    [],
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) =>
+      setEdges((currentEdges) => addEdge({ ...defaultEdgeOptions, ...connection }, currentEdges)),
+    [defaultEdgeOptions],
+  );
+
+  useEffect(() => {
+    setShouldRefit(true);
+  }, [layoutKey]);
+
+  useEffect(() => {
+    if (!reactFlowInstance) {
+      return;
+    }
+
+    setShouldRefit(true);
+  }, [reactFlowInstance]);
+
+  useEffect(() => {
+    if (!reactFlowInstance || !shouldRefit || nodes.length === 0) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      reactFlowInstance.fitView({ padding: 0.25, duration: 300 });
+      setShouldRefit(false);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [reactFlowInstance, shouldRefit, nodes.length]);
 
   useEffect(() => {
     if (!employees.length) {
@@ -64,35 +151,31 @@ export default function OrgChartCanvas({
       return;
     }
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = buildOrgChart(employeeCollection);
-
-    const preparedNodes = layoutedNodes.map((node) => ({
-      ...node,
-      draggable: false,
-      selectable: false,
-      data: {
-        ...node.data,
-        onSelect: onSelectEmployee,
-        onDeleteBranch,
-        isSelected: selectedEmployeeId === node.id,
-        isHighlighted: highlightedEmployeeIds.includes(node.id),
-        isBranchMember: branchMemberIds.has(node.id),
-      },
-    }));
-
-    setNodes(preparedNodes);
-    setEdges(layoutedEdges);
-  }, [employees, employeeCollection, onSelectEmployee, onDeleteBranch, selectedEmployeeId, highlightedEmployeeIds, branchMemberIds]);
-
-  useEffect(() => {
-    if (!nodes.length) return;
-    setNodes((currentNodes) => updateNodeHighlights(
-      currentNodes,
+    const { nodes: layoutedNodes, edges: layoutedEdges } = buildOrgChart({
+      employees,
+      hierarchy: effectiveHierarchy,
       highlightedEmployeeIds,
       selectedEmployeeId,
-      branchMemberIds
-    ));
-  }, [highlightedEmployeeIds, selectedEmployeeId, branchMemberIds, nodes.length]);
+      branchMemberIds,
+      onSelectEmployee,
+      onDeleteBranch,
+      dragAndDrop,
+    });
+
+    setNodes(layoutedNodes);
+    setEdges(layoutedEdges);
+    setShouldRefit(true);
+  }, [
+    employees,
+    effectiveHierarchy,
+    highlightedEmployeeIds,
+    selectedEmployeeId,
+    branchMemberIds,
+    onSelectEmployee,
+    onDeleteBranch,
+    dragAndDrop,
+    dragAndDrop?.dragState,
+  ]);
 
   if (!employees.length) {
     return (
@@ -105,10 +188,15 @@ export default function OrgChartCanvas({
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
+        key={layoutKey}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
+        onInit={setReactFlowInstance}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         nodesDraggable={false}
         nodesConnectable={false}
         panOnScroll
@@ -117,7 +205,7 @@ export default function OrgChartCanvas({
         zoomOnPinch={allowInteraction}
         panOnDrag={allowInteraction}
       >
-  {showBackground && <Background gap={24} size={1.5} />}
+        {showBackground && <Background gap={24} size={1.5} />}
         {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
         {showMiniMap && <MiniMap nodeStrokeColor="#cbd5f5" nodeColor="#f8fafc" maskColor="rgba(15, 23, 42, 0.08)" />}
       </ReactFlow>
