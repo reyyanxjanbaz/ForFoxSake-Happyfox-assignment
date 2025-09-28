@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { ProfileCard } from '../../../components/shared';
 import type { Employee } from '../state/employee';
 import type { DragState } from '../hooks/useDragAndDrop';
@@ -25,11 +26,7 @@ export interface OrgChartNodeData {
   onDeleteBranch?: (employeeId: string) => void;
   isBranchMember?: boolean;
   dragState?: DragState;
-  onDragStart?: (employeeId: string) => void;
-  onDragOver?: (employeeId: string) => void;
-  onDragLeave?: () => void;
-  onDrop?: (employeeId: string) => Promise<boolean> | boolean | void;
-  onDragEnd?: () => void;
+  enableDragAndDrop?: boolean;
 }
 
 const containerStyle: React.CSSProperties = {
@@ -59,21 +56,35 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     isBranchMember = false,
     onSelect,
     dragState,
-    onDragStart,
-    onDragOver,
-    onDragLeave,
-    onDrop,
-    onDragEnd,
+    enableDragAndDrop = false,
   } = data;
   const { onDeleteBranch } = data;
 
-  const isDragSource = dragState?.isDragging && dragState.draggedEmployeeId === employee.id;
+  // @dnd-kit draggable setup
+  const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
+    id: employee.id,
+    disabled: !enableDragAndDrop,
+  });
+
+  // @dnd-kit droppable setup  
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: employee.id,
+    disabled: !enableDragAndDrop,
+  });
+
+  // Combine refs for both draggable and droppable
+  const setNodeRef = (node: HTMLElement | null) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  };
+
+  const isDragSource = isDragging;
   const canAcceptDrop = Boolean(
     dragState?.isDragging &&
     dragState.draggedEmployeeId !== employee.id &&
     dragState.validDropTargets.includes(employee.id)
   );
-  const isDropHover = dragState?.hoveredTargetId === employee.id;
+  const isDropHover = isOver && canAcceptDrop;
 
   const handleSelect = () => {
     if (dragState?.isDragging) {
@@ -85,104 +96,6 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   const handleDelete = (event: React.MouseEvent) => {
     event.stopPropagation();
     onDeleteBranch?.(employee.id);
-  };
-
-  const handleDragStartEvent = (event: React.DragEvent<HTMLDivElement>) => {
-    console.log('🚀 Drag start event triggered for:', employee.name);
-    if (!onDragStart) {
-      console.log('❌ No onDragStart handler provided');
-      return;
-    }
-    
-    // Prevent React Flow from interfering
-    event.stopPropagation();
-    
-    // Set up drag data
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', employee.id);
-    event.dataTransfer.setData('application/json', JSON.stringify({
-      id: employee.id,
-      name: employee.name,
-      type: 'employee'
-    }));
-    
-    // Create a custom drag image for better visual feedback
-    const dragImage = event.currentTarget.cloneNode(true) as HTMLElement;
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    dragImage.style.left = '-1000px';
-    dragImage.style.transform = 'rotate(2deg) scale(0.9)';
-    dragImage.style.opacity = '0.9';
-    dragImage.style.pointerEvents = 'none';
-    dragImage.style.zIndex = '10000';
-    document.body.appendChild(dragImage);
-    
-    event.dataTransfer.setDragImage(dragImage, 140, 80);
-    
-    // Clean up the temporary drag image
-    setTimeout(() => {
-      if (document.body.contains(dragImage)) {
-        document.body.removeChild(dragImage);
-      }
-    }, 50);
-    
-    onDragStart(employee.id);
-    console.log('✅ Drag started successfully for:', employee.name);
-  };
-
-  const handleDragOverEvent = (event: React.DragEvent<HTMLDivElement>) => {
-    if (!dragState?.isDragging || dragState.draggedEmployeeId === employee.id) {
-      return;
-    }
-
-    if (!onDragOver) {
-      return;
-    }
-
-    console.log('🎯 Drag over:', employee.name, 'canAcceptDrop:', canAcceptDrop);
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = canAcceptDrop ? 'move' : 'none';
-    onDragOver(employee.id);
-  };
-
-  const handleDragLeaveEvent = (event: React.DragEvent<HTMLDivElement>) => {
-    if (!dragState?.isDragging || !onDragLeave) {
-      return;
-    }
-
-    if (dragState.hoveredTargetId === employee.id) {
-      onDragLeave();
-    }
-
-    event.stopPropagation();
-  };
-
-  const handleDropEvent = async (event: React.DragEvent<HTMLDivElement>) => {
-    console.log('📥 Drop event on:', employee.name);
-    if (!dragState?.isDragging || !onDrop) {
-      console.log('❌ Drop failed - no drag state or drop handler');
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    console.log('🔄 Processing drop...');
-    try {
-      const result = await onDrop(employee.id);
-      console.log('✅ Drop completed successfully:', result);
-    } catch (error) {
-      console.error('❌ Drop failed:', error);
-    } finally {
-      onDragLeave?.();
-      onDragEnd?.();
-    }
-  };
-
-  const handleDragEndEvent = (event: React.DragEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    onDragEnd?.();
   };
 
   const showConnector = Boolean(employee.managerId);
@@ -250,6 +163,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
       />
       {showConnector && <div style={connectorStyle} aria-hidden />}
       <div
+        ref={setNodeRef}
+        {...attributes}
+        {...(enableDragAndDrop ? listeners : {})}
         style={{
           width: '100%',
           height: '100%',
@@ -261,24 +177,15 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           boxSizing: 'border-box',
           transition: 'all 0.2s ease',
           overflow: 'hidden',
-          cursor: onDragStart ? (isDragSource ? 'grabbing' : 'grab') : onSelect ? 'pointer' : 'default',
+          cursor: enableDragAndDrop ? (isDragSource ? 'grabbing' : 'grab') : onSelect ? 'pointer' : 'default',
           position: 'relative',
           opacity: isDragSource ? 0.7 : 1,
-          transform: isDragSource ? 'scale(1.05)' : 'scale(1)',
+          transform: isDragSource ? 'scale(1.05)' : transform ? `translate3d(${transform.x}px, ${transform.y}px, 0) scale(1.05)` : 'scale(1)',
           zIndex: isDragSource ? 1000 : 'auto',
-          // Ensure drag events can be triggered properly
-          touchAction: onDragStart ? 'none' : 'auto',
-          userSelect: onDragStart ? 'none' : 'auto',
+          touchAction: enableDragAndDrop ? 'none' : 'auto',
+          userSelect: enableDragAndDrop ? 'none' : 'auto',
         }}
         onClick={handleSelect}
-        onMouseDown={(event) => {
-          if (onDragStart) {
-            console.log('🖱️ Mouse down on draggable element:', employee.name);
-            // Prevent React Flow from capturing this event
-            event.stopPropagation();
-            // Don't prevent default - allow drag to start naturally
-          }
-        }}
         role={onSelect ? 'button' : undefined}
         tabIndex={onSelect ? 0 : -1}
         onKeyDown={(event) => {
@@ -288,13 +195,6 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             onSelect(employee.id);
           }
         }}
-        draggable={Boolean(onDragStart)}
-        onDragStart={handleDragStartEvent}
-        onDragOver={handleDragOverEvent}
-        onDragLeave={handleDragLeaveEvent}
-        onDrop={handleDropEvent}
-        onDragEnd={handleDragEndEvent}
-        aria-grabbed={isDragSource || undefined}
       >
         {canDeleteBranch && (
           <button

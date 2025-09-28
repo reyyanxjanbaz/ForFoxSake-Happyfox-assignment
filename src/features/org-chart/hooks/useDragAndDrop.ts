@@ -1,6 +1,7 @@
-// Drag and drop hook for employee reassignment with cycle validation
+// Modern drag and drop hook using @dnd-kit for employee reassignment
 
 import { useCallback, useState } from 'react';
+import type { DragEndEvent, DragStartEvent, DragOverEvent } from '@dnd-kit/core';
 import type { Employee } from '../state/employee';
 import { detectCycle, buildOrgHierarchy } from '../state/orgHierarchy';
 import { employeeApi, type EmployeeUpdateRequest } from '../services/api';
@@ -8,9 +9,8 @@ import { employeeApi, type EmployeeUpdateRequest } from '../services/api';
 export interface DragState {
   isDragging: boolean;
   draggedEmployeeId: string | null;
-  validDropTargets: string[];
   hoveredTargetId: string | null;
-  isValidDrop: boolean;
+  validDropTargets: string[];
 }
 
 export interface UseDragAndDropProps {
@@ -23,11 +23,9 @@ export interface UseDragAndDropProps {
 
 export interface UseDragAndDropReturn {
   dragState: DragState;
-  handleDragStart: (employeeId: string) => void;
-  handleDragOver: (targetEmployeeId: string) => void;
-  handleDragLeave: () => void;
-  handleDrop: (targetEmployeeId: string) => Promise<boolean>;
-  handleDragEnd: () => void;
+  handleDragStart: (event: DragStartEvent) => void;
+  handleDragOver: (event: DragOverEvent) => void;
+  handleDragEnd: (event: DragEndEvent) => Promise<void>;
   isValidDropTarget: (sourceId: string, targetId: string) => boolean;
   getValidDropTargets: (employeeId: string) => string[];
 }
@@ -35,9 +33,8 @@ export interface UseDragAndDropReturn {
 const initialDragState: DragState = {
   isDragging: false,
   draggedEmployeeId: null,
-  validDropTargets: [],
   hoveredTargetId: null,
-  isValidDrop: false,
+  validDropTargets: [],
 };
 
 export const useDragAndDrop = ({
@@ -59,7 +56,7 @@ export const useDragAndDrop = ({
     
     if (!sourceEmployee || !targetEmployee) return false;
 
-    // Can't make someone their own subordinate
+    // Can't make someone their own subordinate (already same manager)
     if (sourceEmployee.managerId === targetId) return false;
 
     // Build hierarchy and check if the reassignment would create a cycle
@@ -82,108 +79,103 @@ export const useDragAndDrop = ({
       .map(emp => emp.id);
   }, [employees, isValidDropTarget]);
 
-  // Handle drag start
-  const handleDragStart = useCallback((employeeId: string) => {
+  // Handle drag start with @dnd-kit
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const employeeId = event.active.id as string;
     const validTargets = getValidDropTargets(employeeId);
     
     setDragState({
       isDragging: true,
       draggedEmployeeId: employeeId,
-      validDropTargets: validTargets,
       hoveredTargetId: null,
-      isValidDrop: false,
+      validDropTargets: validTargets,
     });
 
+    console.log(`🚀 Drag started for employee: ${employeeId}`);
+    console.log(`✅ Valid drop targets: ${validTargets.length} employees`);
     onDragStart?.(employeeId);
   }, [getValidDropTargets, onDragStart]);
 
-  // Handle drag over a potential target
-  const handleDragOver = useCallback((targetEmployeeId: string) => {
-    if (!dragState.isDragging || !dragState.draggedEmployeeId) return;
+  // Handle drag over with @dnd-kit
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !dragState.isDragging) return;
 
-    const isValid = isValidDropTarget(dragState.draggedEmployeeId, targetEmployeeId);
+    const targetId = over.id as string;
+    const sourceId = active.id as string;
     
     setDragState(prev => ({
       ...prev,
-      hoveredTargetId: targetEmployeeId,
-      isValidDrop: isValid,
+      hoveredTargetId: targetId,
     }));
-  }, [dragState.isDragging, dragState.draggedEmployeeId, isValidDropTarget]);
 
-  // Handle drag leave
-  const handleDragLeave = useCallback(() => {
-    setDragState(prev => ({
-      ...prev,
-      hoveredTargetId: null,
-      isValidDrop: false,
-    }));
-  }, []);
+    console.log(`🎯 Dragging ${sourceId} over ${targetId}`);
+  }, [dragState.isDragging]);
 
-  // Handle drop operation
-  const handleDrop = useCallback(async (targetEmployeeId: string): Promise<boolean> => {
-    if (!dragState.isDragging || !dragState.draggedEmployeeId) {
-      return false;
+  // Handle drag end with @dnd-kit
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    // Reset drag state first
+    setDragState(initialDragState);
+    
+    if (!over) {
+      console.log('❌ Drag ended without drop target');
+      onDragEnd?.(false);
+      return;
     }
 
-    const sourceId = dragState.draggedEmployeeId;
+    const sourceId = active.id as string;
+    const targetId = over.id as string;
+    
+    console.log(`🎯 Attempting to drop ${sourceId} on ${targetId}`);
     
     // Validate the drop operation
-    if (!isValidDropTarget(sourceId, targetEmployeeId)) {
+    if (!isValidDropTarget(sourceId, targetId)) {
+      console.log('❌ Invalid drop target');
+      
       // Check if it would create a cycle and notify
       const hierarchy = buildOrgHierarchy(employees);
-      const wouldCreateCycle = detectCycle(sourceId, targetEmployeeId, hierarchy);
+      const wouldCreateCycle = detectCycle(sourceId, targetId, hierarchy);
       if (wouldCreateCycle) {
-        onCycleDetected?.([sourceId, targetEmployeeId]);
+        onCycleDetected?.([sourceId, targetId]);
       }
-      return false;
+      
+      onDragEnd?.(false, sourceId, targetId);
+      return;
     }
 
     try {
+      console.log('🔄 Updating employee manager...');
+      
       // Update the employee's manager via API
       const updateRequest: EmployeeUpdateRequest = {
-        managerId: targetEmployeeId,
+        managerId: targetId,
       };
 
-      // Call the API update operation
       const updatedEmployee = await employeeApi.updateEmployee(sourceId, updateRequest);
       
       if (onEmployeeUpdate) {
-        // Update local state with the returned employee data
         const updatedEmployees = employees.map(emp =>
           emp.id === sourceId ? updatedEmployee : emp
         );
         onEmployeeUpdate(updatedEmployees);
       }
 
-      onDragEnd?.(true, sourceId, targetEmployeeId);
-      return true;
+      console.log('✅ Employee successfully reassigned!');
+      onDragEnd?.(true, sourceId, targetId);
 
     } catch (error) {
-      console.error('Error during drag and drop operation:', error);
-      onDragEnd?.(false, sourceId, targetEmployeeId);
-      return false;
+      console.error('❌ Error during drag and drop operation:', error);
+      onDragEnd?.(false, sourceId, targetId);
     }
-  }, [
-    dragState.isDragging, 
-    dragState.draggedEmployeeId, 
-    isValidDropTarget, 
-    employees, 
-    onEmployeeUpdate, 
-    onDragEnd, 
-    onCycleDetected
-  ]);
-
-  // Handle drag end (cleanup)
-  const handleDragEnd = useCallback(() => {
-    setDragState(initialDragState);
-  }, []);
+  }, [employees, isValidDropTarget, onEmployeeUpdate, onDragEnd, onCycleDetected]);
 
   return {
     dragState,
     handleDragStart,
     handleDragOver,
-    handleDragLeave,
-    handleDrop,
     handleDragEnd,
     isValidDropTarget,
     getValidDropTargets,

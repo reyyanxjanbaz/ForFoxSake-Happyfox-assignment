@@ -158,11 +158,7 @@ const computeTreeLayout = (employees: Employee[], hierarchy: OrgHierarchy): Layo
 };
 
 export interface DragCallbacks {
-  onDragStart?: (employeeId: string) => void;
-  onDragOver?: (employeeId: string) => void;
-  onDragLeave?: () => void;
-  onDrop?: (employeeId: string) => Promise<boolean> | boolean | void;
-  onDragEnd?: () => void;
+  enableDragAndDrop?: boolean;
 }
 
 export interface BuildOrgChartParams {
@@ -250,11 +246,7 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
         isBranchMember: branchSet.has(employee.id),
         onSelect: onSelectEmployee,
         onDeleteBranch,
-        onDragStart: dragCallbacks?.onDragStart,
-        onDragOver: dragCallbacks?.onDragOver,
-        onDragLeave: dragCallbacks?.onDragLeave,
-        onDrop: dragCallbacks?.onDrop,
-        onDragEnd: dragCallbacks?.onDragEnd,
+        enableDragAndDrop: dragCallbacks?.enableDragAndDrop ?? false,
       },
       style: {
         width: NODE_WIDTH,

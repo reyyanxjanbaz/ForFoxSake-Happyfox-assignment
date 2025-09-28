@@ -14,6 +14,7 @@ import {
   type NodeChange,
   type ReactFlowInstance,
 } from 'reactflow';
+import { DndContext, closestCenter, type DragEndEvent, type DragStartEvent, type DragOverEvent } from '@dnd-kit/core';
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
@@ -150,11 +151,7 @@ export default function OrgChartCanvas({
     }
 
     return {
-      onDragStart: dragAndDrop.handleDragStart,
-      onDragOver: dragAndDrop.handleDragOver,
-      onDragLeave: dragAndDrop.handleDragLeave,
-      onDrop: dragAndDrop.handleDrop,
-      onDragEnd: dragAndDrop.handleDragEnd,
+      enableDragAndDrop: true,
     };
   }, [dragAndDrop]);
 
@@ -198,10 +195,11 @@ export default function OrgChartCanvas({
         data: {
           ...node.data,
           dragState,
+          enableDragAndDrop: Boolean(dragAndDrop),
         },
       })),
     );
-  }, [dragState]);
+  }, [dragState, dragAndDrop]);
 
   if (!employees.length) {
     return (
@@ -213,36 +211,43 @@ export default function OrgChartCanvas({
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      <ReactFlow
-        key={layoutKey}
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        fitView
-        onInit={setReactFlowInstance}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodesDraggable={false}
-        nodesConnectable={false}
-        panOnScroll={allowInteraction}
-        selectionOnDrag={false}
-        zoomOnScroll={allowInteraction}
-        zoomOnPinch={allowInteraction}
-        panOnDrag={false}
-        elementsSelectable={false}
-        selectNodesOnDrag={false}
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragStart={dragAndDrop?.handleDragStart}
+        onDragOver={dragAndDrop?.handleDragOver}
+        onDragEnd={dragAndDrop?.handleDragEnd}
       >
-        {showBackground && <Background gap={24} size={1.5} />}
-        {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
-        {showMiniMap && (
-          <MiniMap
-            nodeStrokeColor={(node) => (node.data?.isHighlighted ? '#fb923c' : '#1f2937')}
-            nodeColor={(node) => (node.data?.isHighlighted ? '#fde68a' : '#cbd5f5')}
-            maskColor="rgba(15, 23, 42, 0.12)"
-          />
-        )}
-      </ReactFlow>
+        <ReactFlow
+          key={layoutKey}
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          fitView
+          onInit={setReactFlowInstance}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          panOnScroll={allowInteraction}
+          selectionOnDrag={false}
+          zoomOnScroll={allowInteraction}
+          zoomOnPinch={allowInteraction}
+          panOnDrag={false}
+          elementsSelectable={false}
+          selectNodesOnDrag={false}
+        >
+          {showBackground && <Background gap={24} size={1.5} />}
+          {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
+          {showMiniMap && (
+            <MiniMap
+              nodeStrokeColor={(node) => (node.data?.isHighlighted ? '#fb923c' : '#1f2937')}
+              nodeColor={(node) => (node.data?.isHighlighted ? '#fde68a' : '#cbd5f5')}
+              maskColor="rgba(15, 23, 42, 0.12)"
+            />
+          )}
+        </ReactFlow>
+      </DndContext>
     </div>
   );
 }
