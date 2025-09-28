@@ -206,7 +206,7 @@ export default function OrgChartCanvas({
   if (!employees.length) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-secondary)' }}>
-        Loading org chart...
+        Loading...
       </div>
     );
   }
@@ -229,7 +229,9 @@ export default function OrgChartCanvas({
         selectionOnDrag={false}
         zoomOnScroll={allowInteraction}
         zoomOnPinch={allowInteraction}
-  panOnDrag={false}
+        panOnDrag={false}
+        elementsSelectable={false}
+        selectNodesOnDrag={false}
       >
         {showBackground && <Background gap={24} size={1.5} />}
         {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}

@@ -9,6 +9,43 @@ import AddNodeModal from '../features/org-chart/components/AddNodeModal';
 import type { Employee } from '../features/org-chart/state/employee';
 import '../styles/globals.css';
 
+// Notification component for showing drag and drop feedback
+function NotificationArea() {
+  const { state } = useOrgChart();
+  
+  if (!state.error) return null;
+  
+  const isSuccess = state.error.startsWith('✅');
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      style={{
+        position: 'fixed',
+        top: '80px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1001,
+        padding: '12px 20px',
+        borderRadius: '8px',
+        background: isSuccess 
+          ? 'linear-gradient(135deg, #10b981, #34d399)' 
+          : 'linear-gradient(135deg, #ef4444, #f87171)',
+        color: 'white',
+        fontSize: '14px',
+        fontWeight: '600',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        maxWidth: '400px',
+        textAlign: 'center',
+      }}
+    >
+      {state.error}
+    </motion.div>
+  );
+}
+
 // Wrapper component that connects to context
 function OrgChartCanvasWrapper() {
   const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, dragAndDrop } = useOrgChart();
@@ -156,6 +193,52 @@ function App() {
     <OrgChartProvider>
       <ReactFlowProvider>
         <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+          {/* Notification Area */}
+          <NotificationArea />
+          
+          <div
+            style={{
+              position: 'fixed',
+              top: 'var(--space-4)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-2)',
+              padding: 'var(--space-2) var(--space-3)',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.08)',
+              backdropFilter: 'blur(6px)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              pointerEvents: 'none',
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: 'var(--color-primary)',
+                boxShadow: '0 0 12px rgba(249, 115, 22, 0.35)',
+              }}
+            />
+            <span
+              style={{
+                fontSize: '1rem',
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                color: 'var(--color-text-primary)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ForFoxSake
+            </span>
+          </div>
+
           {/* Add Employee Button - Top Right */}
           <motion.button
             className="add-employee-btn"
@@ -215,7 +298,7 @@ function App() {
                     color: 'var(--color-text-primary)',
                     margin: 0
                   }}>
-                    Org Chart
+                    ForFoxSake
                   </h1>
                   <motion.button
                     onClick={toggleSidebar}

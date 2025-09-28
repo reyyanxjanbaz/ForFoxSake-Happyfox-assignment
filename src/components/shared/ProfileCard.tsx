@@ -4,6 +4,8 @@ import React, { useMemo, useCallback } from 'react';
 import { useLazyImage } from '../../hooks/useLazyImage';
 import type { Employee } from '../../features/org-chart/state/employee';
 
+type ProfileCardTheme = 'light' | 'dark';
+
 export interface ProfileCardProps {
   employee: Employee;
   isHighlighted?: boolean;
@@ -12,6 +14,7 @@ export interface ProfileCardProps {
   showTeam?: boolean;
   onClick?: (employee: Employee) => void;
   className?: string;
+  theme?: ProfileCardTheme;
 }
 
 interface TierTokens {
@@ -66,13 +69,13 @@ interface SizeTokens {
 
 const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
   small: {
-    padding: 12,
-    gap: 10,
-    avatar: 36,
-    heading: '0.9rem',
-    subtext: '0.72rem',
-    meta: '0.68rem',
-    badgePadding: '2px 6px',
+    padding: 6,
+    gap: 6,
+    avatar: 28,
+    heading: '0.85rem',
+    subtext: '0.68rem',
+    meta: '0.62rem',
+    badgePadding: '1px 6px',
   },
   medium: {
     padding: 16,
@@ -94,6 +97,55 @@ const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
   },
 };
 
+interface ThemeTokens {
+  background: string;
+  borderDefault: string;
+  textPrimary: string;
+  textSecondary: string;
+  meta: string;
+  badgeBackground: string;
+  badgeBorder: string;
+  badgeText: string;
+  shadow: string;
+  highlightShadow: string;
+  accentBarOpacity: number;
+  accentBarHeight: number;
+  avatarTextColor: string;
+}
+
+const THEME_TOKENS: Record<ProfileCardTheme, ThemeTokens> = {
+  light: {
+    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)',
+    borderDefault: 'rgba(226, 232, 240, 0.85)',
+    textPrimary: '#0f172a',
+    textSecondary: '#475569',
+    meta: '#64748b',
+    badgeBackground: 'rgba(148, 163, 184, 0.16)',
+    badgeBorder: 'rgba(203, 213, 225, 0.7)',
+    badgeText: '#0f172a',
+    shadow: '0 10px 18px rgba(15, 23, 42, 0.08)',
+    highlightShadow: '0 16px 32px rgba(249, 115, 22, 0.2)',
+    accentBarOpacity: 0.85,
+    accentBarHeight: 3,
+    avatarTextColor: '#1f2937',
+  },
+  dark: {
+    background: 'rgba(15, 23, 42, 0.88)',
+    borderDefault: 'rgba(148, 163, 184, 0.35)',
+    textPrimary: '#f8fafc',
+    textSecondary: '#cbd5f5',
+    meta: '#94a3b8',
+    badgeBackground: 'rgba(15, 23, 42, 0.55)',
+    badgeBorder: 'rgba(255, 255, 255, 0.2)',
+    badgeText: 'rgba(255, 255, 255, 0.95)',
+    shadow: '0 10px 24px rgba(15, 23, 42, 0.18)',
+    highlightShadow: '0 16px 36px rgba(249, 115, 22, 0.22)',
+    accentBarOpacity: 0.9,
+    accentBarHeight: 4,
+    avatarTextColor: '#ffffff',
+  },
+};
+
 const ProfileCard: React.FC<ProfileCardProps> = ({
   employee,
   isHighlighted = false,
@@ -102,6 +154,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   showTeam = true,
   onClick,
   className = '',
+  theme = 'light',
 }) => {
   const photoSrc = useMemo(() => {
     if (employee.photoUrl) return employee.photoUrl;
@@ -144,6 +197,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
 
   const tierTokens = TIER_TOKENS[employee.tier];
   const sizeTokens = SIZE_TOKENS[size];
+  const themeTokens = THEME_TOKENS[theme];
 
   const wrapperStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
@@ -151,22 +205,20 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     padding: sizeTokens.padding,
     gap: sizeTokens.gap,
     borderRadius: 18,
-    background: 'rgba(15, 23, 42, 0.88)',
-    border: `1px solid ${isHighlighted ? tierTokens.border : 'rgba(148, 163, 184, 0.35)'}`,
-    boxShadow: isHighlighted
-      ? '0 16px 36px rgba(249, 115, 22, 0.22)'
-      : '0 10px 24px rgba(15, 23, 42, 0.18)',
+    background: themeTokens.background,
+    border: `1px solid ${isHighlighted ? tierTokens.border : themeTokens.borderDefault}`,
+    boxShadow: isHighlighted ? themeTokens.highlightShadow : themeTokens.shadow,
     transition: 'transform 150ms ease, box-shadow 150ms ease',
     cursor: onClick ? 'pointer' : 'default',
     outline: 'none',
-  }), [isHighlighted, onClick, sizeTokens.gap, sizeTokens.padding, tierTokens.border]);
+  }), [isHighlighted, onClick, sizeTokens.gap, sizeTokens.padding, themeTokens, tierTokens.border]);
 
   const accentBarStyles = useMemo<React.CSSProperties>(() => ({
-    height: 4,
+    height: themeTokens.accentBarHeight,
     borderRadius: 999,
     background: tierTokens.accent,
-    opacity: 0.9,
-  }), [tierTokens.accent]);
+    opacity: themeTokens.accentBarOpacity,
+  }), [themeTokens.accentBarHeight, themeTokens.accentBarOpacity, tierTokens.accent]);
 
   const headerStyles: React.CSSProperties = useMemo(() => ({
     display: 'flex',
@@ -183,21 +235,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 600,
-    color: '#fff',
+    color: themeTokens.avatarTextColor,
     overflow: 'hidden',
     flexShrink: 0,
     border: `2px solid ${tierTokens.accentMuted}`,
-  }), [sizeTokens.avatar, tierTokens.avatarTint, tierTokens.accentMuted]);
+  }), [sizeTokens.avatar, themeTokens.avatarTextColor, tierTokens.avatarTint, tierTokens.accentMuted]);
 
-  const badgeStyles = useMemo<React.CSSProperties>(() => ({
-    padding: sizeTokens.badgePadding,
-    borderRadius: 999,
-    background: tierTokens.accentMuted,
-    color: tierTokens.accent,
-    fontSize: sizeTokens.meta,
-    fontWeight: 600,
-    lineHeight: 1,
-  }), [sizeTokens.badgePadding, sizeTokens.meta, tierTokens.accent, tierTokens.accentMuted]);
+  const badgeStyles = useMemo<React.CSSProperties>(() => {
+    const isLight = theme === 'light';
+    return {
+      padding: sizeTokens.badgePadding,
+      borderRadius: 999,
+      background: isLight ? themeTokens.badgeBackground : tierTokens.accentMuted,
+      color: isLight ? tierTokens.accent : themeTokens.badgeText,
+      border: `1px solid ${isLight ? themeTokens.badgeBorder : tierTokens.accentMuted}`,
+      fontSize: sizeTokens.meta,
+      fontWeight: 600,
+      lineHeight: 1,
+    } satisfies React.CSSProperties;
+  }, [sizeTokens.badgePadding, sizeTokens.meta, theme, themeTokens.badgeBackground, themeTokens.badgeBorder, themeTokens.badgeText, tierTokens.accent, tierTokens.accentMuted]);
 
   const identityStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
@@ -209,24 +265,24 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     margin: 0,
     fontSize: sizeTokens.heading,
     fontWeight: 600,
-    color: '#f8fafc',
+    color: themeTokens.textPrimary,
     lineHeight: 1.2,
-  }), [sizeTokens.heading]);
+  }), [sizeTokens.heading, themeTokens.textPrimary]);
 
   const roleStyles = useMemo<React.CSSProperties>(() => ({
     margin: 0,
     fontSize: sizeTokens.subtext,
-    color: '#cbd5f5',
+    color: themeTokens.textSecondary,
     lineHeight: 1.2,
-  }), [sizeTokens.subtext]);
+  }), [sizeTokens.subtext, themeTokens.textSecondary]);
 
   const metaStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
     flexWrap: 'wrap',
     gap: 6,
     fontSize: sizeTokens.meta,
-    color: '#94a3b8',
-  }), [sizeTokens.meta]);
+    color: themeTokens.meta,
+  }), [sizeTokens.meta, themeTokens.meta]);
 
   const computedClassName = useMemo(() => {
     const base = 'profile-card-legacy';

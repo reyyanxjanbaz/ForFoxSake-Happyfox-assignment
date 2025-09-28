@@ -173,9 +173,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const clearButtonStyle: React.CSSProperties = {
     ...buttonStyle,
-    backgroundColor: hasActiveFilters ? 'var(--color-white)' : 'var(--color-gray-100)',
-    color: hasActiveFilters ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+    backgroundColor: hasActiveFilters ? 'var(--color-primary)' : 'var(--color-gray-100)',
+    color: hasActiveFilters ? 'var(--color-white)' : 'var(--color-text-muted)',
     cursor: hasActiveFilters ? 'pointer' : 'not-allowed',
+    border: hasActiveFilters ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
   };
 
   return (
@@ -288,12 +289,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   style={clearButtonStyle}
                   onMouseEnter={(e) => {
                     if (hasActiveFilters) {
-                      e.currentTarget.style.backgroundColor = 'var(--color-gray-50)';
+                      e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (hasActiveFilters) {
-                      e.currentTarget.style.backgroundColor = 'var(--color-white)';
+                      e.currentTarget.style.backgroundColor = 'var(--color-primary)';
                     }
                   }}
                 >

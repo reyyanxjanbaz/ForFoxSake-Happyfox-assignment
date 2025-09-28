@@ -183,7 +183,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       padding: 'var(--space-1)',
       cursor: hasChildren ? 'pointer' : 'default',
       borderRadius: 'var(--radius-md)',
-      transition: 'background-color var(--duration-fast) ease',
+      transition: 'background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease',
+      backgroundColor: 'rgba(255, 255, 255, 0.65)',
+      border: '1px solid rgba(249, 115, 22, 0.12)',
+      boxShadow: '0 8px 18px rgba(249, 115, 22, 0.08)',
     };
 
     const expanderButtonStyle: React.CSSProperties = {
@@ -192,7 +195,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: hasChildren ? 'var(--color-text-secondary)' : 'transparent',
+      color: hasChildren ? 'var(--color-orange-500)' : 'transparent',
       fontSize: '0.75rem',
       transition: 'transform var(--duration-fast) ease',
       transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
@@ -260,17 +263,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     flexDirection: 'column',
     height: '100%',
     overflow: 'hidden',
+    background: 'linear-gradient(180deg, rgba(249, 249, 249, 0.94) 0%, rgba(255, 255, 255, 0.98) 100%)',
+    borderRight: '1px solid rgba(0, 0, 0, 0.08)',
+    boxShadow: 'inset 0 -1px 0 rgba(0, 0, 0, 0.04)',
   };
 
   const headerStyle: React.CSSProperties = {
     padding: 'var(--space-4)',
-    borderBottom: '1px solid var(--color-border)',
-    backgroundColor: 'var(--color-white)',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+    backgroundColor: 'rgba(248, 248, 248, 0.85)',
+    boxShadow: '0 8px 18px rgba(0, 0, 0, 0.04)',
   };
 
   const titleStyle: React.CSSProperties = {
     fontSize: '1rem',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: '0.03em',
     color: 'var(--color-text-primary)',
     margin: 0,
     marginBottom: 'var(--space-2)',
@@ -278,21 +286,25 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const subtitleStyle: React.CSSProperties = {
     fontSize: '0.75rem',
-    color: 'var(--color-text-muted)',
+    color: 'var(--color-text-secondary)',
     margin: 0,
   };
 
   const treeContainerStyle: React.CSSProperties = {
     flex: 1,
     overflowY: 'auto',
-    overflowX: 'hidden',
+    overflowX: 'auto',
     padding: 'var(--space-3)',
+    scrollbarWidth: 'thin',
+    WebkitOverflowScrolling: 'touch',
+    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 248, 248, 0.85) 100%)',
   };
 
   const treeStyle: React.CSSProperties = {
     listStyle: 'none',
     padding: 0,
     margin: 0,
+    minWidth: 'fit-content',
   };
 
   const emptyStateStyle: React.CSSProperties = {
@@ -335,8 +347,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Actions */}
       <div style={{
         padding: 'var(--space-4)',
-        borderTop: '1px solid var(--color-border)',
-        backgroundColor: 'var(--color-white)',
+        borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+        backgroundColor: 'rgba(248, 248, 248, 0.9)',
+        boxShadow: '0 -8px 18px rgba(0, 0, 0, 0.04)',
       }}>
         <button
           style={{
@@ -350,6 +363,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             fontWeight: '500',
             cursor: 'pointer',
             transition: 'background-color var(--duration-fast) ease',
+            boxShadow: '0 12px 24px rgba(249, 115, 22, 0.18)',
           }}
           onClick={onAddEmployee}
           onMouseEnter={(e) => {
@@ -366,9 +380,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           style={{
             width: '100%',
             padding: 'var(--space-2)',
-            backgroundColor: 'transparent',
-            color: 'var(--color-text-secondary)',
-            border: '1px solid var(--color-border)',
+            backgroundColor: 'rgba(249, 115, 22, 0.08)',
+            color: 'var(--color-orange-700)',
+            border: '1px solid rgba(249, 115, 22, 0.15)',
             borderRadius: 'var(--border-radius)',
             fontSize: '0.75rem',
             cursor: 'pointer',
@@ -381,10 +395,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             setExpandedNodes(allIds);
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+            e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.14)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.08)';
           }}
         >
           Expand All

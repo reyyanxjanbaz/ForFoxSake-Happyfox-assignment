@@ -330,10 +330,57 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     });
   }, [state.employees]);
 
+  const handleDragSuccess = useCallback((sourceId: string, targetId: string) => {
+    const sourceEmployee = state.employees.find(emp => emp.id === sourceId);
+    const targetEmployee = state.employees.find(emp => emp.id === targetId);
+    
+    if (sourceEmployee && targetEmployee) {
+      // Clear any previous errors and show success (temporarily)
+      dispatch({ type: 'SET_ERROR', payload: null });
+      
+      // Show success message briefly
+      setTimeout(() => {
+        dispatch({ 
+          type: 'SET_ERROR', 
+          payload: `✅ ${sourceEmployee.name} moved to ${targetEmployee.name}'s team` 
+        });
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          dispatch({ type: 'SET_ERROR', payload: null });
+        }, 3000);
+      }, 100);
+    }
+  }, [state.employees]);
+
+  const handleDragFailure = useCallback((sourceId: string, targetId: string) => {
+    const sourceEmployee = state.employees.find(emp => emp.id === sourceId);
+    const targetEmployee = state.employees.find(emp => emp.id === targetId);
+    
+    if (sourceEmployee && targetEmployee) {
+      dispatch({ 
+        type: 'SET_ERROR', 
+        payload: `❌ Failed to move ${sourceEmployee.name} to ${targetEmployee.name}'s team` 
+      });
+      
+      // Clear error message after 3 seconds
+      setTimeout(() => {
+        dispatch({ type: 'SET_ERROR', payload: null });
+      }, 3000);
+    }
+  }, [state.employees]);
+
   const dragAndDrop = useDragAndDrop({
     employees: state.employees,
     onEmployeeUpdate: handleDragEmployeeUpdate,
     onCycleDetected: handleCycleDetected,
+    onDragEnd: (success, sourceId, targetId) => {
+      if (success && sourceId && targetId) {
+        handleDragSuccess(sourceId, targetId);
+      } else if (!success && sourceId && targetId) {
+        handleDragFailure(sourceId, targetId);
+      }
+    },
   });
 
   // Load employees on mount
