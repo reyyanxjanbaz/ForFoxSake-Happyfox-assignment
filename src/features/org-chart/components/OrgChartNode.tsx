@@ -238,6 +238,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           size="medium"
           showRole={true}
           showTeam={true}
+          theme="light"
         />
         {(isSelected || isDragSource || canAcceptDrop) && (
           <div

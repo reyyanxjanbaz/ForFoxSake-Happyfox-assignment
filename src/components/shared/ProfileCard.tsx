@@ -115,8 +115,8 @@ interface ThemeTokens {
 
 const THEME_TOKENS: Record<ProfileCardTheme, ThemeTokens> = {
   light: {
-    background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)',
-    borderDefault: 'rgba(226, 232, 240, 0.85)',
+    background: 'transparent',
+    borderDefault: 'transparent',
     textPrimary: '#0f172a',
     textSecondary: '#475569',
     meta: '#64748b',
