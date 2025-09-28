@@ -1,5 +1,4 @@
 import { memo } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { ProfileCard } from '../../../components/shared';
 import type { Employee } from '../state/employee';
@@ -13,7 +12,7 @@ export interface OrgChartNodeData {
   onDeleteBranch?: (employeeId: string) => void;
   isBranchMember?: boolean;
   dragState?: DragState;
-  onDragStart?: (employeeId: string, event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragStart?: (employeeId: string) => void;
   onDragOver?: (employeeId: string) => void;
   onDragLeave?: () => void;
   onDrop?: (employeeId: string) => Promise<boolean> | boolean | void;
@@ -48,6 +47,10 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     onSelect,
     dragState,
     onDragStart,
+    onDragOver,
+    onDragLeave,
+    onDrop,
+    onDragEnd,
   } = data;
   const { onDeleteBranch } = data;
 
@@ -71,85 +74,106 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     onDeleteBranch?.(employee.id);
   };
 
-  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!onDragStart) {
+  const handleDragStartEvent = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!onDragStart) return;
+    event.stopPropagation();
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', employee.id);
+    onDragStart(employee.id);
+  };
+
+  const handleDragOverEvent = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!dragState?.isDragging || dragState.draggedEmployeeId === employee.id) {
       return;
     }
 
-    if (event.button !== 0 && event.pointerType !== 'touch') {
+    if (!onDragOver) {
       return;
     }
 
-    if (dragState?.isDragging) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = canAcceptDrop ? 'move' : 'none';
+    onDragOver(employee.id);
+  };
+
+  const handleDragLeaveEvent = (event: React.DragEvent<HTMLDivElement>) => {
+    if (!dragState?.isDragging || !onDragLeave) {
       return;
     }
 
-    const targetElement = event.target as HTMLElement | null;
-    const isHandle = targetElement?.closest('[data-drag-handle="true"]');
-
-    if (!isHandle) {
-      return;
-    }
-
-    if (targetElement?.closest('button')) {
-      return;
+    if (dragState.hoveredTargetId === employee.id) {
+      onDragLeave();
     }
 
     event.stopPropagation();
-    event.preventDefault();
-    onDragStart(employee.id, event);
   };
 
-  const handlePointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (dragState?.isDragging) {
-      event.stopPropagation();
+  const handleDropEvent = async (event: React.DragEvent<HTMLDivElement>) => {
+    if (!dragState?.isDragging || !onDrop) {
+      return;
     }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    try {
+      await onDrop(employee.id);
+    } finally {
+      onDragLeave?.();
+      onDragEnd?.();
+    }
+  };
+
+  const handleDragEndEvent = (event: React.DragEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    onDragEnd?.();
   };
 
   const showConnector = Boolean(employee.managerId);
   const canDeleteBranch = Boolean(onDeleteBranch);
 
   const borderColorBase = isSelected
-    ? '#2563eb'
+    ? 'var(--color-primary)'
     : isHighlighted
-      ? '#f97316'
+      ? '#fb923c'
       : isBranchMember
-        ? 'rgba(251, 191, 36, 0.65)'
-        : 'rgba(203, 213, 225, 0.85)';
+        ? 'rgba(251, 191, 36, 0.8)'
+        : 'rgba(148, 163, 184, 0.4)';
 
   const borderColor = canAcceptDrop
-    ? (isDropHover ? '#0f766e' : '#10b981')
+    ? (isDropHover ? 'var(--color-emerald-500)' : 'var(--color-emerald-300)')
     : borderColorBase;
 
   const boxShadow = (() => {
     if (isDragSource) {
-      return '0 20px 38px rgba(14, 116, 144, 0.28)';
+      return '0 18px 32px rgba(14, 116, 144, 0.25)';
     }
 
     if (isHighlighted || isSelected) {
-      return '0 20px 42px rgba(249, 115, 22, 0.22)';
+      return '0 18px 32px rgba(234, 88, 12, 0.25)';
     }
 
     if (canAcceptDrop) {
       return isDropHover
-        ? '0 16px 32px rgba(34, 197, 94, 0.3)'
-        : '0 14px 26px rgba(16, 185, 129, 0.22)';
+        ? '0 14px 28px rgba(16, 185, 129, 0.3)'
+        : '0 12px 22px rgba(16, 185, 129, 0.2)';
     }
 
     if (isBranchMember) {
-      return '0 14px 26px rgba(251, 191, 36, 0.18)';
+      return '0 12px 22px rgba(251, 191, 36, 0.18)';
     }
 
-    return '0 14px 28px rgba(148, 163, 184, 0.16)';
+    return '0 12px 24px rgba(15, 23, 42, 0.08)';
   })();
 
   const backgroundColor = canAcceptDrop
-    ? (isDropHover ? 'rgba(134, 239, 172, 0.45)' : 'rgba(167, 243, 208, 0.4)')
+    ? (isDropHover ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.12)')
     : isHighlighted
-      ? 'rgba(254, 243, 199, 0.75)'
+      ? 'rgba(251, 146, 60, 0.18)'
       : isBranchMember
-        ? 'rgba(253, 224, 71, 0.3)'
-        : '#f8fafc';
+        ? 'rgba(254, 215, 170, 0.18)'
+        : 'rgba(15, 23, 42, 0.65)';
 
   return (
     <div style={containerStyle}>
@@ -168,17 +192,13 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           background: backgroundColor,
           border: `2px solid ${borderColor}`,
           boxShadow,
-          padding: 0,
+          padding: '6px',
           boxSizing: 'border-box',
           transition: 'all 0.2s ease',
-          overflow: 'visible',
-          cursor: onSelect ? 'pointer' : 'default',
+          overflow: 'hidden',
+          cursor: onDragStart ? (isDragSource ? 'grabbing' : 'grab') : onSelect ? 'pointer' : 'default',
           position: 'relative',
-          display: 'flex',
-          alignItems: 'stretch',
         }}
-        data-employee-node="true"
-        data-employee-id={employee.id}
         onClick={handleSelect}
         onMouseDown={(event) => {
           if (onDragStart) {
@@ -194,42 +214,14 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             onSelect(employee.id);
           }
         }}
+        draggable={Boolean(onDragStart)}
+        onDragStart={handleDragStartEvent}
+        onDragOver={handleDragOverEvent}
+        onDragLeave={handleDragLeaveEvent}
+        onDrop={handleDropEvent}
+        onDragEnd={handleDragEndEvent}
+        aria-grabbed={isDragSource || undefined}
       >
-        <div
-          data-drag-handle="true"
-          role="presentation"
-          style={{
-            position: 'absolute',
-            top: '-18px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '64px',
-            height: '16px',
-            borderRadius: '999px',
-            background: isDragSource ? '#0f766e' : '#e2e8f0',
-            border: '1px solid rgba(148, 163, 184, 0.6)',
-            boxShadow: '0 8px 16px rgba(148, 163, 184, 0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: isDragSource ? 'grabbing' : 'grab',
-            transition: 'background-color 0.2s ease, border-color 0.2s ease',
-            zIndex: 3,
-            touchAction: 'none',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-        >
-          <div
-            style={{
-              width: 32,
-              height: 4,
-              borderRadius: 999,
-              background: isDragSource ? '#ffffff' : '#94a3b8',
-              opacity: isDragSource ? 0.95 : 0.8,
-            }}
-          />
-        </div>
         {canDeleteBranch && (
           <button
             type="button"
@@ -243,8 +235,8 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               width: '22px',
               height: '22px',
               borderRadius: '999px',
-              backgroundColor: 'rgba(248, 113, 113, 0.9)',
-              color: '#ffffff',
+              backgroundColor: 'rgba(15, 23, 42, 0.8)',
+              color: 'var(--color-white)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
@@ -253,50 +245,37 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               fontSize: '0.65rem',
               transition: 'background-color 0.2s ease',
               zIndex: 2,
-              boxShadow: '0 6px 14px rgba(248, 113, 113, 0.35)',
+              boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
               pointerEvents: 'auto',
             }}
             onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.95)';
+              event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
             }}
             onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = 'rgba(248, 113, 113, 0.9)';
-            }}
-            onPointerDown={(event) => {
-              event.stopPropagation();
+              event.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
             }}
           >
             ×
           </button>
         )}
-        <div
-          style={{
-            flex: 1,
-            padding: '10px',
-            paddingTop: '18px',
-            paddingBottom: '14px',
-            boxSizing: 'border-box',
-          }}
-        >
-          <ProfileCard
-            employee={employee}
-            isHighlighted={isHighlighted || isSelected}
-            size="medium"
-            showRole={true}
-            showTeam={true}
-          />
-        </div>
+        <ProfileCard
+          employee={employee}
+          isHighlighted={isHighlighted || isSelected}
+          size="medium"
+          showRole={true}
+          showTeam={true}
+        />
         {(isSelected || isDragSource) && (
           <div
             style={{
               position: 'absolute',
-              top: '10px',
-              right: '14px',
+              top: '8px',
+              right: '12px',
               padding: '2px 8px',
               borderRadius: '999px',
-              backgroundColor: isDragSource ? 'rgba(14, 116, 144, 0.18)' : 'rgba(234, 88, 12, 0.18)',
-              color: isDragSource ? '#0f172a' : '#9a3412',
-              fontSize: '0.65rem',
+              backgroundColor: isDragSource ? 'rgba(14, 116, 144, 0.16)' : 'rgba(234, 88, 12, 0.15)',
+              color: isDragSource ? '#0f766e' : 'var(--color-primary)',
+              fontSize: '0.625rem',
               fontWeight: 600,
             }}
           >

@@ -15,48 +15,42 @@ export interface ProfileCardProps {
 }
 
 interface TierTokens {
-  highlightBorder: string;
+  border: string;
   accent: string;
   accentMuted: string;
   avatarTint: string;
-  badgeText: string;
 }
 
 const TIER_TOKENS: Record<Employee['tier'], TierTokens> = {
   executive: {
-    highlightBorder: 'rgba(249, 115, 22, 0.55)',
-    accent: 'linear-gradient(90deg, #fb923c 0%, #f97316 100%)',
-    accentMuted: 'rgba(249, 115, 22, 0.16)',
+    border: 'rgba(249, 115, 22, 0.65)',
+    accent: '#f97316',
+    accentMuted: 'rgba(249, 115, 22, 0.15)',
     avatarTint: 'rgba(249, 115, 22, 0.18)',
-    badgeText: '#b4540d',
   },
   lead: {
-    highlightBorder: 'rgba(250, 204, 21, 0.4)',
-    accent: 'linear-gradient(90deg, #fde047 0%, #facc15 100%)',
-    accentMuted: 'rgba(250, 204, 21, 0.18)',
-    avatarTint: 'rgba(250, 204, 21, 0.18)',
-    badgeText: '#b45309',
+    border: 'rgba(250, 204, 21, 0.55)',
+    accent: '#facc15',
+    accentMuted: 'rgba(250, 204, 21, 0.14)',
+    avatarTint: 'rgba(250, 204, 21, 0.16)',
   },
   manager: {
-    highlightBorder: 'rgba(59, 130, 246, 0.45)',
-    accent: 'linear-gradient(90deg, #60a5fa 0%, #0ea5e9 100%)',
-    accentMuted: 'rgba(96, 165, 250, 0.18)',
-    avatarTint: 'rgba(148, 197, 255, 0.3)',
-    badgeText: '#1d4ed8',
+    border: 'rgba(14, 165, 233, 0.55)',
+    accent: '#0ea5e9',
+    accentMuted: 'rgba(14, 165, 233, 0.14)',
+    avatarTint: 'rgba(14, 165, 233, 0.18)',
   },
   individual: {
-    highlightBorder: 'rgba(129, 140, 248, 0.45)',
-    accent: 'linear-gradient(90deg, #a855f7 0%, #6366f1 100%)',
-    accentMuted: 'rgba(129, 140, 248, 0.16)',
-    avatarTint: 'rgba(129, 140, 248, 0.24)',
-    badgeText: '#4c1d95',
+    border: 'rgba(99, 102, 241, 0.55)',
+    accent: '#6366f1',
+    accentMuted: 'rgba(99, 102, 241, 0.14)',
+    avatarTint: 'rgba(99, 102, 241, 0.18)',
   },
   intern: {
-    highlightBorder: 'rgba(34, 197, 94, 0.45)',
-    accent: 'linear-gradient(90deg, #4ade80 0%, #22c55e 100%)',
-    accentMuted: 'rgba(74, 222, 128, 0.18)',
-    avatarTint: 'rgba(74, 222, 128, 0.2)',
-    badgeText: '#166534',
+    border: 'rgba(34, 197, 94, 0.5)',
+    accent: '#22c55e',
+    accentMuted: 'rgba(34, 197, 94, 0.14)',
+    avatarTint: 'rgba(34, 197, 94, 0.18)',
   },
 };
 
@@ -68,21 +62,17 @@ interface SizeTokens {
   subtext: string;
   meta: string;
   badgePadding: string;
-  accentHeight: number;
-  metaGap: number;
 }
 
 const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
   small: {
-    padding: 8,
-    gap: 6,
-    avatar: 26,
-    heading: '0.78rem',
-    subtext: '0.64rem',
-    meta: '0.6rem',
-    badgePadding: '2px 5px',
-    accentHeight: 2,
-    metaGap: 4,
+    padding: 12,
+    gap: 10,
+    avatar: 36,
+    heading: '0.9rem',
+    subtext: '0.72rem',
+    meta: '0.68rem',
+    badgePadding: '2px 6px',
   },
   medium: {
     padding: 16,
@@ -92,8 +82,6 @@ const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
     subtext: '0.8rem',
     meta: '0.74rem',
     badgePadding: '3px 8px',
-    accentHeight: 4,
-    metaGap: 6,
   },
   large: {
     padding: 20,
@@ -103,8 +91,6 @@ const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
     subtext: '0.9rem',
     meta: '0.8rem',
     badgePadding: '4px 10px',
-    accentHeight: 5,
-    metaGap: 8,
   },
 };
 
@@ -162,27 +148,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   const wrapperStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
     flexDirection: 'column',
-    width: '100%',
-    height: '100%',
     padding: sizeTokens.padding,
     gap: sizeTokens.gap,
     borderRadius: 18,
-    background: '#ffffff',
-    border: `1px solid ${isHighlighted ? tierTokens.highlightBorder : 'rgba(203, 213, 225, 0.75)'}`,
+    background: 'rgba(15, 23, 42, 0.88)',
+    border: `1px solid ${isHighlighted ? tierTokens.border : 'rgba(148, 163, 184, 0.35)'}`,
     boxShadow: isHighlighted
-      ? '0 18px 34px rgba(249, 115, 22, 0.18)'
-      : '0 10px 22px rgba(148, 163, 184, 0.22)',
+      ? '0 16px 36px rgba(249, 115, 22, 0.22)'
+      : '0 10px 24px rgba(15, 23, 42, 0.18)',
     transition: 'transform 150ms ease, box-shadow 150ms ease',
     cursor: onClick ? 'pointer' : 'default',
     outline: 'none',
-  }), [isHighlighted, onClick, sizeTokens.gap, sizeTokens.padding, tierTokens.highlightBorder]);
+  }), [isHighlighted, onClick, sizeTokens.gap, sizeTokens.padding, tierTokens.border]);
 
   const accentBarStyles = useMemo<React.CSSProperties>(() => ({
-    height: sizeTokens.accentHeight,
+    height: 4,
     borderRadius: 999,
     background: tierTokens.accent,
     opacity: 0.9,
-  }), [sizeTokens.accentHeight, tierTokens.accent]);
+  }), [tierTokens.accent]);
 
   const headerStyles: React.CSSProperties = useMemo(() => ({
     display: 'flex',
@@ -199,7 +183,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: 600,
-    color: '#0f172a',
+    color: '#fff',
     overflow: 'hidden',
     flexShrink: 0,
     border: `2px solid ${tierTokens.accentMuted}`,
@@ -209,40 +193,40 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     padding: sizeTokens.badgePadding,
     borderRadius: 999,
     background: tierTokens.accentMuted,
-    color: tierTokens.badgeText,
+    color: tierTokens.accent,
     fontSize: sizeTokens.meta,
     fontWeight: 600,
     lineHeight: 1,
-  }), [sizeTokens.badgePadding, sizeTokens.meta, tierTokens.badgeText, tierTokens.accentMuted]);
+  }), [sizeTokens.badgePadding, sizeTokens.meta, tierTokens.accent, tierTokens.accentMuted]);
 
   const identityStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
     flexDirection: 'column',
-    gap: size === 'small' ? 2 : 4,
-  }), [size]);
+    gap: 4,
+  }), []);
 
   const nameStyles = useMemo<React.CSSProperties>(() => ({
     margin: 0,
     fontSize: sizeTokens.heading,
     fontWeight: 600,
-    color: '#0f172a',
+    color: '#f8fafc',
     lineHeight: 1.2,
   }), [sizeTokens.heading]);
 
   const roleStyles = useMemo<React.CSSProperties>(() => ({
     margin: 0,
     fontSize: sizeTokens.subtext,
-    color: '#475569',
+    color: '#cbd5f5',
     lineHeight: 1.2,
   }), [sizeTokens.subtext]);
 
   const metaStyles = useMemo<React.CSSProperties>(() => ({
     display: 'flex',
     flexWrap: 'wrap',
-    gap: sizeTokens.metaGap,
+    gap: 6,
     fontSize: sizeTokens.meta,
-    color: '#64748b',
-  }), [sizeTokens.meta, sizeTokens.metaGap]);
+    color: '#94a3b8',
+  }), [sizeTokens.meta]);
 
   const computedClassName = useMemo(() => {
     const base = 'profile-card-legacy';
@@ -293,7 +277,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
             <span>{initials}</span>
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: sizeTokens.metaGap, flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
             <div style={identityStyles}>
               <h3 style={nameStyles} title={employee.name}>

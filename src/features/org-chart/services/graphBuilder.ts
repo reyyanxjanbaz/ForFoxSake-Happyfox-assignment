@@ -1,7 +1,6 @@
 // Graph builder for React Flow with new tree layout and node/edge factories
 import { MarkerType, Position } from 'reactflow';
 import type { Edge, Node } from 'reactflow';
-import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import type { OrgChartNodeData } from '../components/OrgChartNode';
@@ -159,7 +158,7 @@ const computeTreeLayout = (employees: Employee[], hierarchy: OrgHierarchy): Layo
 };
 
 export interface DragCallbacks {
-  onDragStart?: (employeeId: string, event: ReactPointerEvent<HTMLDivElement>) => void;
+  onDragStart?: (employeeId: string) => void;
   onDragOver?: (employeeId: string) => void;
   onDragLeave?: () => void;
   onDrop?: (employeeId: string) => Promise<boolean> | boolean | void;
