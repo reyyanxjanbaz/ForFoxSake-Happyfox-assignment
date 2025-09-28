@@ -47,6 +47,33 @@ const initialState: OrgChartState = {
   isAddModalOpen: false,
 };
 
+const fallbackEmployeeId = (employee: Employee, index: number): string => {
+  if (employee.employeeId && employee.employeeId.trim().length > 0) {
+    return employee.employeeId.trim();
+  }
+
+  const fromId = employee.id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+  if (fromId) {
+    return `EMP-${fromId}`;
+  }
+
+  return `EMP-${String(index + 1).padStart(5, '0')}`;
+};
+
+const ensureEmployeesHaveIds = (employees: Employee[]): Employee[] => {
+  return employees.map((employee, index) => {
+    const normalizedId = fallbackEmployeeId(employee, index);
+    if (normalizedId === employee.employeeId) {
+      return employee;
+    }
+
+    return {
+      ...employee,
+      employeeId: normalizedId,
+    };
+  });
+};
+
 // State reducer
 function orgChartReducer(state: OrgChartState, action: OrgChartAction): OrgChartState {
   switch (action.type) {
@@ -56,19 +83,22 @@ function orgChartReducer(state: OrgChartState, action: OrgChartAction): OrgChart
     case 'SET_ERROR':
       return { ...state, error: action.payload };
     
-    case 'SET_EMPLOYEES':
-      return { 
-        ...state, 
-        employees: action.payload,
-        hierarchy: buildOrgHierarchy(action.payload),
+    case 'SET_EMPLOYEES': {
+      const normalizedEmployees = ensureEmployeesHaveIds(action.payload);
+      return {
+        ...state,
+        employees: normalizedEmployees,
+        hierarchy: buildOrgHierarchy(normalizedEmployees),
       };
+    }
 
     case 'SET_HIERARCHY':
       return { ...state, hierarchy: action.payload };
     
     case 'UPDATE_EMPLOYEE': {
+      const normalizedEmployee = ensureEmployeesHaveIds([action.payload])[0];
       const updatedEmployees = state.employees.map(emp =>
-        emp.id === action.payload.id ? action.payload : emp
+        emp.id === normalizedEmployee.id ? normalizedEmployee : emp
       );
       return {
         ...state,
@@ -78,7 +108,8 @@ function orgChartReducer(state: OrgChartState, action: OrgChartAction): OrgChart
     }
     
     case 'ADD_EMPLOYEE': {
-      const newEmployees = [...state.employees, action.payload];
+      const normalizedEmployee = ensureEmployeesHaveIds([action.payload])[0];
+      const newEmployees = [...state.employees, normalizedEmployee];
       return {
         ...state,
         employees: newEmployees,
@@ -124,7 +155,7 @@ function orgChartReducer(state: OrgChartState, action: OrgChartAction): OrgChart
       return { ...state, isAddModalOpen: action.payload };
     
     case 'UPDATE_EMPLOYEE_HIGHLIGHTS':
-      return { ...state, employees: action.payload };
+      return { ...state, employees: ensureEmployeesHaveIds(action.payload) };
     
     default:
       return state;
@@ -183,8 +214,8 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     
     try {
       const employeeCollection = await employeeApi.loadEmployees();
-      dispatch({ type: 'SET_EMPLOYEES', payload: employeeCollection.data });
-      dispatch({ type: 'SET_HIERARCHY', payload: employeeCollection.hierarchy });
+  dispatch({ type: 'SET_EMPLOYEES', payload: employeeCollection.data });
+  dispatch({ type: 'SET_HIERARCHY', payload: employeeCollection.hierarchy });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load employees';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
@@ -284,7 +315,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
 
   // Drag and drop operations
   const handleDragEmployeeUpdate = useCallback((updatedEmployees: Employee[]) => {
-    dispatch({ type: 'SET_EMPLOYEES', payload: updatedEmployees });
+  dispatch({ type: 'SET_EMPLOYEES', payload: updatedEmployees });
   }, []);
 
   const handleCycleDetected = useCallback((cycleNodes: string[]) => {

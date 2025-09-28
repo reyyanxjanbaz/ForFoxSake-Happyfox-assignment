@@ -190,7 +190,6 @@ export default function OrgChartCanvas({
   }, [chart]);
 
   const dragState = dragAndDrop?.dragState;
-  const isDraggingEmployee = Boolean(dragState?.isDragging);
 
   useEffect(() => {
     setNodes((currentNodes) =>
@@ -230,7 +229,7 @@ export default function OrgChartCanvas({
         selectionOnDrag={false}
         zoomOnScroll={allowInteraction}
         zoomOnPinch={allowInteraction}
-        panOnDrag={allowInteraction && !isDraggingEmployee}
+  panOnDrag={false}
       >
         {showBackground && <Background gap={24} size={1.5} />}
         {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}

@@ -1,6 +1,6 @@
-// ProfileCard component for displaying employee information in sidebar and chart nodes
+// Legacy ProfileCard component used across the org chart and sidebar views
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useLazyImage } from '../../hooks/useLazyImage';
 import type { Employee } from '../../features/org-chart/state/employee';
 
@@ -14,6 +14,86 @@ export interface ProfileCardProps {
   className?: string;
 }
 
+interface TierTokens {
+  border: string;
+  accent: string;
+  accentMuted: string;
+  avatarTint: string;
+}
+
+const TIER_TOKENS: Record<Employee['tier'], TierTokens> = {
+  executive: {
+    border: 'rgba(249, 115, 22, 0.65)',
+    accent: '#f97316',
+    accentMuted: 'rgba(249, 115, 22, 0.15)',
+    avatarTint: 'rgba(249, 115, 22, 0.18)',
+  },
+  lead: {
+    border: 'rgba(250, 204, 21, 0.55)',
+    accent: '#facc15',
+    accentMuted: 'rgba(250, 204, 21, 0.14)',
+    avatarTint: 'rgba(250, 204, 21, 0.16)',
+  },
+  manager: {
+    border: 'rgba(14, 165, 233, 0.55)',
+    accent: '#0ea5e9',
+    accentMuted: 'rgba(14, 165, 233, 0.14)',
+    avatarTint: 'rgba(14, 165, 233, 0.18)',
+  },
+  individual: {
+    border: 'rgba(99, 102, 241, 0.55)',
+    accent: '#6366f1',
+    accentMuted: 'rgba(99, 102, 241, 0.14)',
+    avatarTint: 'rgba(99, 102, 241, 0.18)',
+  },
+  intern: {
+    border: 'rgba(34, 197, 94, 0.5)',
+    accent: '#22c55e',
+    accentMuted: 'rgba(34, 197, 94, 0.14)',
+    avatarTint: 'rgba(34, 197, 94, 0.18)',
+  },
+};
+
+interface SizeTokens {
+  padding: number;
+  gap: number;
+  avatar: number;
+  heading: string;
+  subtext: string;
+  meta: string;
+  badgePadding: string;
+}
+
+const SIZE_TOKENS: Record<'small' | 'medium' | 'large', SizeTokens> = {
+  small: {
+    padding: 12,
+    gap: 10,
+    avatar: 36,
+    heading: '0.9rem',
+    subtext: '0.72rem',
+    meta: '0.68rem',
+    badgePadding: '2px 6px',
+  },
+  medium: {
+    padding: 16,
+    gap: 12,
+    avatar: 44,
+    heading: '1rem',
+    subtext: '0.8rem',
+    meta: '0.74rem',
+    badgePadding: '3px 8px',
+  },
+  large: {
+    padding: 20,
+    gap: 14,
+    avatar: 56,
+    heading: '1.1rem',
+    subtext: '0.9rem',
+    meta: '0.8rem',
+    badgePadding: '4px 10px',
+  },
+};
+
 const ProfileCard: React.FC<ProfileCardProps> = ({
   employee,
   isHighlighted = false,
@@ -23,267 +103,206 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   onClick,
   className = '',
 }) => {
-  // Lazy loading for profile photo
-  const photoSrc = employee.photoUrl
-    ? employee.photoUrl
-    : employee.photoAssetKey
-      ? (employee.photoAssetKey.startsWith('http')
+  const photoSrc = useMemo(() => {
+    if (employee.photoUrl) return employee.photoUrl;
+    if (employee.photoAssetKey) {
+      return employee.photoAssetKey.startsWith('http')
         ? employee.photoAssetKey
-        : `/assets/photos/${employee.photoAssetKey}.jpg`)
-      : undefined;
+        : `/assets/photos/${employee.photoAssetKey}.jpg`;
+    }
+    return undefined;
+  }, [employee.photoAssetKey, employee.photoUrl]);
 
   const lazyImage = useLazyImage({
     src: photoSrc ?? '',
     alt: `${employee.name} profile photo`,
-    rootMargin: '100px', // Start loading when 100px away from viewport
-    threshold: 0.1,
+    rootMargin: '120px',
+    threshold: 0.15,
   });
 
-  const handleClick = () => {
-    if (onClick) {
-      onClick(employee);
-    }
-  };
+  const initials = useMemo(() => (
+    employee.name
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part.charAt(0))
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'FX'
+  ), [employee.name]);
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if ((event.key === 'Enter' || event.key === ' ') && onClick) {
+  const handleClick = useCallback(() => {
+    onClick?.(employee);
+  }, [employee, onClick]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       onClick(employee);
     }
-  };
+  }, [employee, onClick]);
 
-  // Size-based styling
-  const sizeStyles = {
-    small: {
-      padding: 'var(--space-2)',
-      avatarSize: '32px',
-      nameSize: '0.75rem',
-      roleSize: '0.625rem',
-      gap: 'var(--space-1)',
-    },
-    medium: {
-      padding: 'var(--space-3)',
-      avatarSize: '48px',
-      nameSize: '0.875rem',
-      roleSize: '0.75rem',
-      gap: 'var(--space-2)',
-    },
-    large: {
-      padding: 'var(--space-4)',
-      avatarSize: '64px',
-      nameSize: '1rem',
-      roleSize: '0.875rem',
-      gap: 'var(--space-3)',
-    },
-  };
+  const tierTokens = TIER_TOKENS[employee.tier];
+  const sizeTokens = SIZE_TOKENS[size];
 
-  const styles = sizeStyles[size];
+  const wrapperStyles = useMemo<React.CSSProperties>(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    padding: sizeTokens.padding,
+    gap: sizeTokens.gap,
+    borderRadius: 18,
+    background: 'rgba(15, 23, 42, 0.88)',
+    border: `1px solid ${isHighlighted ? tierTokens.border : 'rgba(148, 163, 184, 0.35)'}`,
+    boxShadow: isHighlighted
+      ? '0 16px 36px rgba(249, 115, 22, 0.22)'
+      : '0 10px 24px rgba(15, 23, 42, 0.18)',
+    transition: 'transform 150ms ease, box-shadow 150ms ease',
+    cursor: onClick ? 'pointer' : 'default',
+    outline: 'none',
+  }), [isHighlighted, onClick, sizeTokens.gap, sizeTokens.padding, tierTokens.border]);
 
-  // Tier-based styling
-  const tierStyles = {
-    executive: {
-      backgroundColor: 'var(--color-orange-50)',
-      borderColor: 'var(--color-orange-400)',
-      textColor: 'var(--color-orange-900)',
-    },
-    lead: {
-      backgroundColor: 'var(--color-orange-50)',
-      borderColor: 'var(--color-orange-300)',
-      textColor: 'var(--color-orange-800)',
-    },
-    manager: {
-      backgroundColor: 'var(--color-white)',
-      borderColor: 'var(--color-gray-300)',
-      textColor: 'var(--color-gray-900)',
-    },
-    individual: {
-      backgroundColor: 'var(--color-white)',
-      borderColor: 'var(--color-gray-200)',
-      textColor: 'var(--color-gray-800)',
-    },
-    intern: {
-      backgroundColor: 'var(--color-gray-50)',
-      borderColor: 'var(--color-gray-200)',
-      textColor: 'var(--color-gray-700)',
-    },
-  };
+  const accentBarStyles = useMemo<React.CSSProperties>(() => ({
+    height: 4,
+    borderRadius: 999,
+    background: tierTokens.accent,
+    opacity: 0.9,
+  }), [tierTokens.accent]);
 
-  const tierStyle = tierStyles[employee.tier];
-
-  const cardStyle: React.CSSProperties = {
+  const headerStyles: React.CSSProperties = useMemo(() => ({
     display: 'flex',
     alignItems: 'center',
-    gap: styles.gap,
-    padding: styles.padding,
-    backgroundColor: tierStyle.backgroundColor,
-    border: `2px solid ${tierStyle.borderColor}`,
-    borderRadius: 'var(--border-radius)',
-    cursor: onClick ? 'pointer' : 'default',
-    transition: 'all var(--duration-fast) ease',
-    position: 'relative',
-    width: '100%',
-    boxShadow: isHighlighted 
-      ? '0 0 20px var(--color-highlight-glow)' 
-      : 'var(--shadow-sm)',
-    transform: isHighlighted ? 'scale(1.02)' : 'scale(1)',
-  };
+    gap: sizeTokens.gap,
+  }), [sizeTokens.gap]);
 
-  const avatarStyle: React.CSSProperties = {
-    width: styles.avatarSize,
-    height: styles.avatarSize,
+  const avatarStyles = useMemo<React.CSSProperties>(() => ({
+    width: sizeTokens.avatar,
+    height: sizeTokens.avatar,
     borderRadius: '50%',
-    backgroundColor: 'var(--color-gray-200)',
+    background: tierTokens.avatarTint,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    fontWeight: 600,
+    color: '#fff',
     overflow: 'hidden',
     flexShrink: 0,
-    position: 'relative',
-  };
+    border: `2px solid ${tierTokens.accentMuted}`,
+  }), [sizeTokens.avatar, tierTokens.avatarTint, tierTokens.accentMuted]);
 
-  const textContainerStyle: React.CSSProperties = {
-    flex: 1,
-    minWidth: 0, // Allow text to truncate
-    color: tierStyle.textColor,
-  };
+  const badgeStyles = useMemo<React.CSSProperties>(() => ({
+    padding: sizeTokens.badgePadding,
+    borderRadius: 999,
+    background: tierTokens.accentMuted,
+    color: tierTokens.accent,
+    fontSize: sizeTokens.meta,
+    fontWeight: 600,
+    lineHeight: 1,
+  }), [sizeTokens.badgePadding, sizeTokens.meta, tierTokens.accent, tierTokens.accentMuted]);
 
-  const nameStyle: React.CSSProperties = {
-    fontSize: styles.nameSize,
-    fontWeight: '600',
+  const identityStyles = useMemo<React.CSSProperties>(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  }), []);
+
+  const nameStyles = useMemo<React.CSSProperties>(() => ({
     margin: 0,
+    fontSize: sizeTokens.heading,
+    fontWeight: 600,
+    color: '#f8fafc',
     lineHeight: 1.2,
-  };
+  }), [sizeTokens.heading]);
 
-  const roleStyle: React.CSSProperties = {
-    fontSize: styles.roleSize,
-    color: 'var(--color-text-secondary)',
+  const roleStyles = useMemo<React.CSSProperties>(() => ({
     margin: 0,
-    marginTop: 'var(--space-1)',
+    fontSize: sizeTokens.subtext,
+    color: '#cbd5f5',
     lineHeight: 1.2,
-  };
+  }), [sizeTokens.subtext]);
 
-  const teamStyle: React.CSSProperties = {
-    fontSize: styles.roleSize,
-    color: 'var(--color-text-muted)',
-    margin: 0,
-    marginTop: 'var(--space-1)',
-    lineHeight: 1.2,
-  };
+  const metaStyles = useMemo<React.CSSProperties>(() => ({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 6,
+    fontSize: sizeTokens.meta,
+    color: '#94a3b8',
+  }), [sizeTokens.meta]);
 
-  // Generate initials fallback
-  const initials = employee.name
-    .split(' ')
-    .map(part => part.charAt(0))
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
+  const computedClassName = useMemo(() => {
+    const base = 'profile-card-legacy';
+    return className ? `${base} ${className}` : base;
+  }, [className]);
 
   return (
     <div
-      className={`profile-card ${className} ${isHighlighted ? 'highlight-pulse' : ''}`}
-      style={cardStyle}
+      className={computedClassName}
+      style={wrapperStyles}
       onClick={onClick ? handleClick : undefined}
       onKeyDown={onClick ? handleKeyDown : undefined}
       tabIndex={onClick ? 0 : -1}
       role={onClick ? 'button' : undefined}
-      aria-label={onClick ? `View details for ${employee.name}` : undefined}
+      onMouseEnter={(event) => {
+        if (!onClick) return;
+        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(event) => {
+        if (!onClick) return;
+        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+      }}
+      onFocus={(event) => {
+        if (!onClick) return;
+        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+      }}
+      onBlur={(event) => {
+        if (!onClick) return;
+        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+      }}
     >
-      {/* Avatar */}
-      <div style={avatarStyle}>
-        {photoSrc && !lazyImage.isError ? (
-          <>
+      <div style={accentBarStyles} aria-hidden />
+      <div style={headerStyles}>
+        <div style={avatarStyles} aria-hidden={!photoSrc}>
+          {photoSrc && !lazyImage.isError ? (
             <img
               ref={lazyImage.imgRef}
               src={lazyImage.src}
-              alt={`${employee.name} profile photo`}
+              alt={`Portrait of ${employee.name}`}
+              loading="lazy"
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                opacity: lazyImage.isLoaded ? 1 : 0,
-                transition: 'opacity var(--duration-normal) ease',
               }}
             />
-            {/* Loading placeholder */}
-            {!lazyImage.isLoaded && (
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundColor: 'var(--color-gray-200)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--color-text-muted)',
-                fontSize: '0.75rem',
-                fontWeight: '500',
-              }}>
-                {lazyImage.isInView ? (
-                  <div
-                    style={{
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid var(--color-gray-300)',
-                      borderTop: '2px solid var(--color-primary)',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                    aria-label="Loading photo"
-                  />
-                ) : (
-                  initials
-                )}
-              </div>
-            )}
-          </>
-  ) : (
-          <div style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'var(--color-gray-200)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-text-muted)',
-            fontSize: '0.75rem',
-            fontWeight: '500',
-          }}>
-            {initials}
+          ) : (
+            <span>{initials}</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+            <div style={identityStyles}>
+              <h3 style={nameStyles} title={employee.name}>
+                {employee.name}
+              </h3>
+              {showRole && (
+                <p style={roleStyles} title={employee.designation}>
+                  {employee.designation}
+                </p>
+              )}
+            </div>
+            <span style={badgeStyles} aria-label="Employee ID">
+              {employee.employeeId}
+            </span>
           </div>
-        )}
+          {(showTeam || size !== 'small') && (
+            <div style={metaStyles}>
+              {showTeam && employee.team && (
+                <span title={employee.team}>{employee.team}</span>
+              )}
+              <span>{employee.tier.charAt(0).toUpperCase() + employee.tier.slice(1)}</span>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Text Content */}
-      <div style={textContainerStyle}>
-        <h4 className="text-truncate" style={nameStyle}>
-          {employee.name}
-        </h4>
-        
-        {showRole && (
-          <p className="text-truncate" style={roleStyle}>
-            {employee.designation}
-          </p>
-        )}
-        
-        {showTeam && size !== 'small' && (
-          <p className="text-truncate" style={teamStyle}>
-            {employee.team}
-          </p>
-        )}
-      </div>
-
-      {/* Highlight indicator */}
-      {isHighlighted && (
-        <div style={{
-          position: 'absolute',
-          top: '4px',
-          right: '4px',
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--color-highlight)',
-          animation: 'highlight-pulse 2s ease-in-out infinite',
-        }} />
-      )}
     </div>
   );
 };

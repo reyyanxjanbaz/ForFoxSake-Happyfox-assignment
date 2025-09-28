@@ -137,9 +137,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     ? 'var(--color-primary)'
     : isHighlighted
       ? '#fb923c'
-    : isBranchMember
-      ? 'var(--color-orange-300)'
-      : 'var(--color-border)';
+      : isBranchMember
+        ? 'rgba(251, 191, 36, 0.8)'
+        : 'rgba(148, 163, 184, 0.4)';
 
   const borderColor = canAcceptDrop
     ? (isDropHover ? 'var(--color-emerald-500)' : 'var(--color-emerald-300)')
@@ -167,11 +167,13 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     return '0 12px 24px rgba(15, 23, 42, 0.08)';
   })();
 
-  const backgroundColor = isHighlighted
-    ? 'rgba(251, 146, 60, 0.18)'
-    : isBranchMember
-      ? 'rgba(254, 215, 170, 0.45)'
-      : 'var(--color-white)';
+  const backgroundColor = canAcceptDrop
+    ? (isDropHover ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.12)')
+    : isHighlighted
+      ? 'rgba(251, 146, 60, 0.18)'
+      : isBranchMember
+        ? 'rgba(254, 215, 170, 0.18)'
+        : 'rgba(15, 23, 42, 0.65)';
 
   return (
     <div style={containerStyle}>
@@ -186,10 +188,12 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
         style={{
           width: '100%',
           height: '100%',
-          borderRadius: '16px',
+          borderRadius: '18px',
           background: backgroundColor,
           border: `2px solid ${borderColor}`,
           boxShadow,
+          padding: '6px',
+          boxSizing: 'border-box',
           transition: 'all 0.2s ease',
           overflow: 'hidden',
           cursor: onDragStart ? (isDragSource ? 'grabbing' : 'grab') : onSelect ? 'pointer' : 'default',
@@ -228,8 +232,8 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               position: 'absolute',
               top: '8px',
               right: '8px',
-              width: '32px',
-              height: '32px',
+              width: '22px',
+              height: '22px',
               borderRadius: '999px',
               backgroundColor: 'rgba(15, 23, 42, 0.8)',
               color: 'var(--color-white)',
@@ -238,7 +242,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.85rem',
+              fontSize: '0.65rem',
               transition: 'background-color 0.2s ease',
               zIndex: 2,
               boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
