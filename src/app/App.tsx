@@ -307,10 +307,7 @@ function App() {
 
             {/* Help Button */}
             <motion.button
-              onClick={() => {
-                // TODO: Add help link here
-                console.log('Help button clicked - link to be added');
-              }}
+              onClick={() => window.open('https://youtu.be/__MXJgiXUAU', '_blank')}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               style={{
