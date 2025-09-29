@@ -27,6 +27,39 @@
   cursor: pointer;
 }
 
+/* Special styling for org chart nodes - fixed size that perfectly fills the background */
+.profile-card-legacy.org-chart-node-card {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 136px !important; /* Fixed height minus padding (160 - 24) */
+  max-height: 136px !important;
+}
+
+/* Fixed layout for accent bar */
+.profile-card-legacy.org-chart-node-card > div:first-child {
+  height: 3px !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Fixed layout for main content area */
+.profile-card-legacy.org-chart-node-card > div:last-child {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  min-height: 0 !important;
+}
+
 .profile-card-wrapper.profile-card--highlighted {
   filter: drop-shadow(0 12px 28px var(--profile-glow, rgba(249, 115, 22, 0.3)));
 }

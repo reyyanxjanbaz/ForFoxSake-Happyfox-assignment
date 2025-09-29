@@ -167,13 +167,13 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
         {...attributes}
         {...(enableDragAndDrop ? listeners : {})}
         style={{
-          width: '100%',
-          height: '100%',
+          width: '280px',
+          height: '160px',
           borderRadius: '18px',
           background: backgroundColor,
           border: `2px solid ${borderColor}`,
           boxShadow,
-          padding: '6px',
+          padding: '0',
           boxSizing: 'border-box',
           transition: 'all 0.2s ease',
           overflow: 'hidden',
@@ -232,14 +232,27 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             ×
           </button>
         )}
-        <ProfileCard
-          employee={employee}
-          isHighlighted={isHighlighted || isSelected}
-          size="medium"
-          showRole={true}
-          showTeam={true}
-          theme="light"
-        />
+        <div
+          style={{
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            padding: '12px',
+            boxSizing: 'border-box',
+          }}
+        >
+          <ProfileCard
+            employee={employee}
+            isHighlighted={isHighlighted || isSelected}
+            size="medium"
+            showRole={true}
+            showTeam={true}
+            theme="light"
+            className="org-chart-node-card"
+          />
+        </div>
         {(isSelected || isDragSource || canAcceptDrop) && (
           <div
             style={{
