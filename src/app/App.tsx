@@ -256,13 +256,13 @@ function App() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
+                width: '56px',
+                height: '56px',
+                borderRadius: '10%',
                 backgroundColor: 'var(--color-primary)',
                 color: 'var(--color-white)',
                 border: 'none',
-                fontSize: '24px',
+                fontSize: '28px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
@@ -281,8 +281,8 @@ function App() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               style={{
-                width: '48px',
-                height: '48px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '50%',
                 backgroundColor: '#24292e',
                 color: 'var(--color-white)',
@@ -296,8 +296,8 @@ function App() {
               title="View on GitHub"
             >
               <svg
-                width="20"
-                height="20"
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -314,23 +314,31 @@ function App() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               style={{
-                width: '48px',
-                height: '48px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '50%',
-                backgroundColor: '#6b7280',
-                color: 'var(--color-white)',
-                border: 'none',
+                backgroundColor: '#ffffffff',
+                border: '0px solid #e5e7eb',
                 cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(107, 114, 128, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '20px',
-                fontWeight: 'bold',
+                padding: '0px',
+                overflow: 'hidden',
               }}
               title="Help & Documentation"
             >
-              ?
+              <img
+                src="/ummm-actually.png"
+                alt="Help"
+                style={{
+                  width: '80%',
+                  height: '80%',
+                  objectFit: 'cover',
+                  borderRadius: '50%',
+                }}
+              />
             </motion.button>
           </div>
 
@@ -371,10 +379,10 @@ function App() {
                     whileTap={{ scale: 0.95 }}
                     style={{
                       padding: 'var(--space-2)',
-                      borderRadius: 'var(--radius-md)',
-                      backgroundColor: 'transparent',
+                      borderRadius: '16.9%',
+                      backgroundColor: 'var(--color-primary)',
                       border: '1px solid var(--color-border)',
-                      color: 'var(--color-text-secondary)',
+                      color: 'white',
                       cursor: 'pointer',
                     }}
                     aria-label="Collapse sidebar"
@@ -407,10 +415,10 @@ function App() {
                   whileTap={{ scale: 0.95 }}
                   style={{
                     padding: 'var(--space-2)',
-                    borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'transparent',
+                    borderRadius: '16.9%',
+                    backgroundColor: 'var(--color-primary)',
                     border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-secondary)',
+                    color: 'white',
                     cursor: 'pointer',
                   }}
                   aria-label="Expand sidebar"
