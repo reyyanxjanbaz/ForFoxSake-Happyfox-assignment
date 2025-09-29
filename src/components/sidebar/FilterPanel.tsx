@@ -110,7 +110,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 'var(--space-3) var(--space-4)',
-    backgroundColor: 'var(--color-surface)',
+    backgroundColor: 'var(--color-primary)',
     borderBottom: isExpanded ? '1px solid var(--color-border)' : 'none',
     cursor: 'pointer',
     transition: 'background-color var(--duration-fast) ease',
@@ -119,7 +119,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const titleStyle: React.CSSProperties = {
     fontSize: '0.875rem',
     fontWeight: '600',
-    color: 'var(--color-text-primary)',
+    color: 'var(--color-white)',
     margin: 0,
     display: 'flex',
     alignItems: 'center',
@@ -128,7 +128,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const chevronStyle: React.CSSProperties = {
     fontSize: '0.75rem',
-    color: 'var(--color-text-secondary)',
+    color: 'var(--color-white)',
     transition: 'transform var(--duration-fast) ease',
     transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
   };
@@ -186,10 +186,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         style={headerStyle}
         onClick={() => setIsExpanded(!isExpanded)}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--color-gray-100)';
+          e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+          e.currentTarget.style.backgroundColor = 'var(--color-primary)';
         }}
       >
         <h3 style={titleStyle}>

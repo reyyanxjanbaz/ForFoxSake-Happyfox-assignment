@@ -368,7 +368,7 @@ function App() {
                   <h1 style={{ 
                     fontSize: '1.25rem', 
                     fontWeight: '600',
-                    color: 'var(--color-text-primary)',
+                    color: 'var(--color-primary)',
                     margin: 0
                   }}>
                     ForFoxSake
