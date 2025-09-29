@@ -93,8 +93,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     onSelect?.(employee.id);
   };
 
-  const handleDelete = (event: React.MouseEvent) => {
+  const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    event.preventDefault();
     onDeleteBranch?.(employee.id);
   };
 
@@ -165,7 +166,6 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
       <div
         ref={setNodeRef}
         {...attributes}
-        {...(enableDragAndDrop ? listeners : {})}
         style={{
           width: '280px',
           height: '160px',
@@ -200,6 +200,8 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           <button
             type="button"
             onClick={handleDelete}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
             aria-label={`Delete ${employee.name}`}
             title={`Delete ${employee.name}'s branch`}
             style={{
@@ -232,6 +234,22 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             ×
           </button>
         )}
+        {/* Drag handle area - excludes the delete button area */}
+        {enableDragAndDrop && (
+          <div
+            {...listeners}
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              right: canDeleteBranch ? '30px' : '0',
+              bottom: '0',
+              cursor: isDragSource ? 'grabbing' : 'grab',
+              zIndex: 1,
+            }}
+          />
+        )}
+        
         <div
           style={{
             position: 'absolute',
@@ -241,17 +259,20 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             bottom: '0',
             padding: '12px',
             boxSizing: 'border-box',
+            pointerEvents: 'none',
           }}
         >
-          <ProfileCard
-            employee={employee}
-            isHighlighted={isHighlighted || isSelected}
-            size="medium"
-            showRole={true}
-            showTeam={true}
-            theme="light"
-            className="org-chart-node-card"
-          />
+          <div style={{ pointerEvents: 'auto' }}>
+            <ProfileCard
+              employee={employee}
+              isHighlighted={isHighlighted || isSelected}
+              size="medium"
+              showRole={true}
+              showTeam={true}
+              theme="light"
+              className="org-chart-node-card"
+            />
+          </div>
         </div>
         {(isSelected || isDragSource || canAcceptDrop) && (
           <div
