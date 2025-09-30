@@ -322,7 +322,7 @@ function App() {
 
             {/* Help Button */}
             <motion.button
-              onClick={() => window.open('https://youtu.be/__MXJgiXUAU', '_blank')}
+              onClick={() => window.open('https://youtu.be/xSqxG6dsBJE', '_blank')}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               style={{
