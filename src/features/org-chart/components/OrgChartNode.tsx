@@ -196,59 +196,85 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
           }
         }}
       >
-        {canDeleteBranch && (
-          <button
-            type="button"
-            onClick={handleDelete}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            aria-label={`Delete ${employee.name}`}
-            title={`Delete ${employee.name}'s branch`}
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '8px',
-              width: '22px',
-              height: '22px',
-              borderRadius: '999px',
-              backgroundColor: 'rgba(15, 23, 42, 0.8)',
-              color: 'var(--color-white)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.65rem',
-              transition: 'background-color 0.2s ease',
-              zIndex: 2,
-              boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
-              pointerEvents: 'auto',
-            }}
-            onMouseEnter={(event) => {
-              event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
-            }}
-          >
-            ×
-          </button>
-        )}
-        {/* Drag handle area - excludes the delete button area */}
-        {enableDragAndDrop && (
-          <div
-            {...listeners}
-            style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              right: canDeleteBranch ? '30px' : '0',
-              bottom: '0',
-              cursor: isDragSource ? 'grabbing' : 'grab',
-              zIndex: 1,
-            }}
-          />
-        )}
+        {/* Action Buttons Container */}
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          display: 'flex',
+          gap: '6px',
+          zIndex: 2,
+        }}>
+          {/* Drag Handle Button */}
+          {enableDragAndDrop && (
+            <button
+              type="button"
+              {...listeners}
+              aria-label={`Move ${employee.name}`}
+              title={`Drag to move ${employee.name}`}
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                color: 'var(--color-white)',
+                border: 'none',
+                cursor: isDragSource ? 'grabbing' : 'grab',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.7rem',
+                transition: 'background-color 0.2s ease',
+                boxShadow: '0 6px 14px rgba(59, 130, 246, 0.25)',
+                pointerEvents: 'auto',
+              }}
+              onMouseEnter={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 1)';
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.8)';
+              }}
+            >
+              ⋮⋮
+            </button>
+          )}
+
+          {/* Delete Button */}
+          {canDeleteBranch && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              aria-label={`Delete ${employee.name}`}
+              title={`Delete ${employee.name}'s branch`}
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                color: 'var(--color-white)',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.65rem',
+                transition: 'background-color 0.2s ease',
+                boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
+                pointerEvents: 'auto',
+              }}
+              onMouseEnter={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
         
         <div
           style={{
