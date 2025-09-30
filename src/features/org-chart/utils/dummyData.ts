@@ -150,7 +150,9 @@ const mapSeedToEmployee = (seed: StaticEmployeeSeed, index: number): Employee =>
   managerId: seed.managerId,
   photoAssetKey: null,
   photoUrl: seed.photoUrl,
-  employeeId: `EMP${seed.id.toString().padStart(3, '0')}`,
+  employeeId: `#${1000 + parseInt(seed.id)}`,
+
+
   highlightState: {
     active: false,
     reason: null,
@@ -190,7 +192,9 @@ export const createEmployeeForManager = (
     managerId,
     photoAssetKey: null,
     photoUrl: null,
-    employeeId: `EMP${timestamp.toString().slice(-6)}`,
+    employeeId: `#${Math.floor(Math.random() * 9000) + 1000}`,
+
+
     highlightState: {
       active: false,
       reason: null,

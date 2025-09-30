@@ -269,7 +269,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                 <input
                   id="filter-id"
                   type="text"
-                  placeholder="e.g. EMP1234"
+                  placeholder="e.g. #4325 or just 4325"
                   value={localFilters.employeeId}
                   onChange={(e) => handleInputChange('employeeId', e.target.value)}
                   style={inputStyle}

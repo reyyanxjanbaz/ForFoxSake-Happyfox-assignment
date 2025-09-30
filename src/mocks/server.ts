@@ -33,7 +33,7 @@ const EmployeeFactory = Factory.extend({
     return null; // Will be set explicitly in seeding
   },
   employeeId() {
-    return `EMP${faker.string.numeric(4)}`;
+    return `#${faker.number.int({ min: 1000, max: 9999 })}`;
   },
   photoAssetKey() {
     const photoAssets = [
@@ -135,7 +135,9 @@ export function makeServer({ environment = 'development' } = {}) {
         const newEmployee = {
           ...attrs,
           id: `emp_${faker.string.alphanumeric(8)}`,
-          employeeId: `EMP${faker.string.numeric(4)}`,
+          employeeId: `#${faker.number.int({ min: 1000, max: 9999 })}`,
+
+
           photoAssetKey: faker.helpers.arrayElement([
             'person-01', 'person-02', 'person-03', 'person-04', 'person-05',
             'person-06', 'person-07', 'person-08', 'person-09', 'person-10',

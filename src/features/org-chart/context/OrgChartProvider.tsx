@@ -53,12 +53,9 @@ const fallbackEmployeeId = (employee: Employee, index: number): string => {
     return employee.employeeId.trim();
   }
 
-  const fromId = employee.id.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
-  if (fromId) {
-    return `EMP-${fromId}`;
-  }
-
-  return `EMP-${String(index + 1).padStart(5, '0')}`;
+  // Generate random 4-digit number for clean ID format
+  const randomNum = Math.floor(Math.random() * 9000) + 1000; // Ensures 4 digits (1000-9999)
+  return `#${randomNum}`;
 };
 
 const ensureEmployeesHaveIds = (employees: Employee[]): Employee[] => {
@@ -338,17 +335,58 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     active: boolean,
     reason: 'filter' | 'drag' | null
   ) => {
+    
     const updatedEmployees = state.employees.map(employee => {
-      if (employeeIds.includes(employee.id)) {
+      // If we're applying new filter highlights
+      if (active && reason === 'filter' && employeeIds.includes(employee.id)) {
         return {
           ...employee,
           highlightState: {
-            active,
-            reason,
+            active: true,
+            reason: 'filter' as const,
           },
           lastUpdatedAt: new Date().toISOString(),
         };
       }
+      
+      // If we're clearing filter highlights (reason === null means clearing)
+      if (!active && reason === null) {
+        // Clear ALL filter highlights, regardless of whether the employee is in the list
+        if (employee.highlightState.reason === 'filter') {
+          return {
+            ...employee,
+            highlightState: {
+              active: false,
+              reason: null,
+            },
+            lastUpdatedAt: new Date().toISOString(),
+          };
+        }
+        // Also clear specific employees in the list
+        if (employeeIds.includes(employee.id)) {
+          return {
+            ...employee,
+            highlightState: {
+              active: false,
+              reason: null,
+            },
+            lastUpdatedAt: new Date().toISOString(),
+          };
+        }
+      }
+      
+      // If we're applying drag highlights
+      if (reason === 'drag' && employeeIds.includes(employee.id)) {
+        return {
+          ...employee,
+          highlightState: {
+            active,
+            reason: 'drag' as const,
+          },
+          lastUpdatedAt: new Date().toISOString(),
+        };
+      }
+      
       return employee;
     });
     

@@ -197,50 +197,14 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
         }}
       >
         {/* Action Buttons Container */}
-        <div style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          display: 'flex',
-          gap: '6px',
-          zIndex: 2,
-        }}>
-          {/* Drag Handle Button */}
-          {enableDragAndDrop && (
-            <button
-              type="button"
-              {...listeners}
-              aria-label={`Move ${employee.name}`}
-              title={`Drag to move ${employee.name}`}
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '999px',
-                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                color: 'var(--color-white)',
-                border: 'none',
-                cursor: isDragSource ? 'grabbing' : 'grab',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                transition: 'background-color 0.2s ease',
-                boxShadow: '0 6px 14px rgba(59, 130, 246, 0.25)',
-                pointerEvents: 'auto',
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 1)';
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.8)';
-              }}
-            >
-              ⋮⋮
-            </button>
-          )}
-
-          {/* Delete Button */}
-          {canDeleteBranch && (
+        {/* Delete Button - Top Right */}
+        {canDeleteBranch && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            zIndex: 2,
+          }}>
             <button
               type="button"
               onClick={handleDelete}
@@ -259,9 +223,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '0.65rem',
+                fontSize: '0.875rem',
                 transition: 'background-color 0.2s ease',
-                boxShadow: '0 6px 14px rgba(15, 23, 42, 0.25)',
+                boxShadow: '0 6px 14px rgba(15, 23, 42, 0.15)',
                 pointerEvents: 'auto',
               }}
               onMouseEnter={(event) => {
@@ -273,8 +237,51 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             >
               ×
             </button>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Drag Handle Button - Top Left */}
+        {enableDragAndDrop && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            left: '8px',
+            zIndex: 2,
+          }}>
+            <button
+              type="button"
+              {...listeners}
+              aria-label={`Move ${employee.name}`}
+              title={`Drag to move ${employee.name}`}
+              style={{
+                width: '22px',
+                height: '22px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(107, 114, 128, 0.8)',
+                color: 'var(--color-white)',
+                border: 'none',
+                cursor: isDragSource ? 'grabbing' : 'grab',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.7rem',
+                transition: 'background-color 0.2s ease',
+                boxShadow: '0 6px 14px rgba(107, 114, 128, 0.25)',
+                pointerEvents: 'auto',
+              }}
+              onMouseEnter={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 1)';
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.8)';
+              }}
+            >
+              ⋮⋮
+            </button>
+          </div>
+        )}
+
+
         
         <div
           style={{
@@ -305,7 +312,8 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             style={{
               position: 'absolute',
               top: '8px',
-              right: (enableDragAndDrop && canDeleteBranch) ? '58px' : canDeleteBranch ? '36px' : enableDragAndDrop ? '36px' : '12px',
+              left: '50%',
+              transform: 'translateX(-50%)',
               padding: '3px 10px',
               borderRadius: '999px',
               backgroundColor: canAcceptDrop 
@@ -316,6 +324,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               fontWeight: 700,
               boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
               animation: (isDragSource || canAcceptDrop) ? 'pulse 1.5s infinite' : 'none',
+              zIndex: 1,
             }}
           >
             {canAcceptDrop 

@@ -11,7 +11,7 @@
 | `team`           | `string`                                                         | ✅       | Team name (Marketing, Engineering, etc.) used for grouping in sidebar. |
 | `managerId`      | `string \| null`                                                 | ✅       | Parent employee id; null for root executives.                          |
 | `photoAssetKey`  | `string`                                                         | ✅       | Filename for bundled backgroundless photo asset.                       |
-| `employeeId`     | `string`                                                         | ✅       | Public-facing identifier searched in filters (exact match).            |
+| `employeeId`     | `string`                                                         | ✅       | Public-facing 4-digit ID with # prefix (e.g., #4325).                  |
 | `highlightState` | `{ active: boolean; reason: "filter" \| "drag" \| null }`        | ✅       | Controls glow animation triggers.                                      |
 | `lastUpdatedAt`  | `string (ISO timestamp)`                                         | ✅       | Useful for optimistic Mirage sync and audit trail.                     |
 

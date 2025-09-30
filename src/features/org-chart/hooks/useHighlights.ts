@@ -45,22 +45,21 @@ export const useHighlights = ({
       return;
     }
 
-  const previousIds = previousFilterIdsRef.current;
-  const nextSet = new Set(filteredEmployeeIds);
-
-    const idsToDeactivate = previousIds.filter(id => !nextSet.has(id));
-    if (idsToDeactivate.length > 0) {
-      onEmployeeHighlight(idsToDeactivate, false, null);
-    }
-
-    if (filteredEmployeeIds.length > 0) {
-      onEmployeeHighlight(filteredEmployeeIds, true, 'filter');
-    } else if (previousIds.length > 0) {
+    const previousIds = previousFilterIdsRef.current;
+    const currentIds = filteredEmployeeIds;
+    
+    // Always clear ALL previous filter highlights first
+    if (previousIds.length > 0) {
       onEmployeeHighlight(previousIds, false, null);
     }
+    
+    // Then apply new highlights if any
+    if (currentIds.length > 0) {
+      onEmployeeHighlight(currentIds, true, 'filter');
+    }
 
-    previousFilterIdsRef.current = filteredEmployeeIds;
-  }, [filteredEmployeeIds, onEmployeeHighlight]);
+    previousFilterIdsRef.current = currentIds;
+  }, [filteredEmployeeIds, onEmployeeHighlight, filterState]);
 
   // Get all currently highlighted employee IDs
   const highlightedEmployeeIds = useMemo(() => {

@@ -45,8 +45,31 @@ export const filterByDesignation = (employees: Employee[], query: string): Emplo
 
 export const filterByEmployeeId = (employees: Employee[], query: string): Employee[] => {
   if (!query.trim()) return employees;
-  // Employee ID filter is exact match and case-sensitive
-  return employees.filter(emp => emp.employeeId === query.trim());
+  
+  const normalizedQuery = query.trim();
+  
+  return employees.filter(emp => {
+    const employeeId = emp.employeeId;
+    
+    // Check for exact match
+    if (employeeId === normalizedQuery) {
+      return true;
+    }
+    
+    // If query starts with #, check exact match
+    if (normalizedQuery.startsWith('#')) {
+      return employeeId === normalizedQuery;
+    }
+    
+    // If query is just numbers, check if it matches the number part (e.g., "4325" matches "#4325")
+    if (/^\d+$/.test(normalizedQuery)) {
+      const numberPart = employeeId.replace('#', '');
+      return numberPart === normalizedQuery;
+    }
+    
+    // Partial match for any other case
+    return employeeId.includes(normalizedQuery);
+  });
 };
 
 // Apply AND logic to combine multiple active filters
