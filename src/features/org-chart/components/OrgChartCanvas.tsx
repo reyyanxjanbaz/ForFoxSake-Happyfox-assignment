@@ -21,6 +21,7 @@ import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
 import { buildOrgChart, type OrgChartNode, type DragCallbacks } from '../services/graphBuilder';
 import OrgChartNodeComponent from './OrgChartNode';
 import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
+import { UndoAlert } from './UndoAlert';
 
 import 'reactflow/dist/style.css';
 
@@ -35,6 +36,7 @@ interface OrgChartCanvasProps {
   selectedEmployeeId?: string | null;
   onSelectEmployee?: (employeeId: string) => void;
   onDeleteBranch?: (employeeId: string) => void;
+  onRestoreFromUndo?: () => void;
   dragAndDrop?: UseDragAndDropReturn;
   showMiniMap?: boolean;
   showControls?: boolean;
@@ -49,6 +51,7 @@ export default function OrgChartCanvas({
   selectedEmployeeId = null,
   onSelectEmployee,
   onDeleteBranch,
+  onRestoreFromUndo,
   dragAndDrop,
   showMiniMap = true,
   showControls = true,
@@ -248,6 +251,9 @@ export default function OrgChartCanvas({
           )}
         </ReactFlow>
       </DndContext>
+      
+      {/* Undo Alert */}
+      <UndoAlert onUndo={onRestoreFromUndo || (() => console.log('No restore function provided'))} />
     </div>
   );
 }

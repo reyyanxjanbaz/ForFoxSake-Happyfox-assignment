@@ -305,7 +305,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
             style={{
               position: 'absolute',
               top: '8px',
-              right: canDeleteBranch ? '36px' : '12px',
+              right: (enableDragAndDrop && canDeleteBranch) ? '58px' : canDeleteBranch ? '36px' : enableDragAndDrop ? '36px' : '12px',
               padding: '3px 10px',
               borderRadius: '999px',
               backgroundColor: canAcceptDrop 

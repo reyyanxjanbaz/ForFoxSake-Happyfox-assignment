@@ -9,6 +9,7 @@ import { initialFilterState, updateFilterQuery, clearAllFilters } from '../state
 import { employeeApi } from '../services/api';
 import { useHighlights } from '../hooks/useHighlights';
 import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { useUndoStore } from '../state/undoState';
 
 // Combined application state
 export interface OrgChartState {
@@ -172,6 +173,7 @@ export interface OrgChartContextValue {
   updateEmployee: (employee: Employee) => Promise<void>;
   addEmployee: (employee: Employee) => void;
   removeEmployeeBranch: (employeeId: string) => Promise<void>;
+  restoreFromUndo: () => void;
   
   // Filter operations
   updateFilter: (field: 'name' | 'designation' | 'employeeId', query: string) => void;
@@ -206,6 +208,7 @@ export interface OrgChartProviderProps {
 
 export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(orgChartReducer, initialState);
+  const { recordDelete, performUndo } = useUndoStore();
 
   // Employee operations
   const loadEmployees = useCallback(async () => {
@@ -250,16 +253,33 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     const hierarchy = buildOrgHierarchy(state.employees);
     const descendantIds = getDescendants(employeeId, hierarchy);
     const branchIds = [employeeId, ...descendantIds];
+    
+    // Find the employee being deleted and their children
+    const employeeToDelete = state.employees.find(emp => emp.id === employeeId);
+    const childrenToDelete = state.employees.filter(emp => branchIds.includes(emp.id) && emp.id !== employeeId);
+    
+    if (!employeeToDelete) {
+      dispatch({ type: 'SET_ERROR', payload: 'Employee not found' });
+      return;
+    }
 
     try {
       await employeeApi.deleteEmployee(employeeId, { cascade: true });
       dispatch({ type: 'REMOVE_EMPLOYEES', payload: branchIds });
+      
+      // Record the deletion for undo functionality
+      recordDelete({
+        type: childrenToDelete.length > 0 ? 'DELETE_BRANCH' : 'DELETE_NODE',
+        employee: employeeToDelete,
+        parentId: employeeToDelete.managerId || undefined,
+        children: childrenToDelete.length > 0 ? childrenToDelete : undefined,
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete employee branch';
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
       throw error;
     }
-  }, [state.employees]);
+  }, [state.employees, recordDelete]);
 
   // Filter operations
   const updateFilter = useCallback((field: 'name' | 'designation' | 'employeeId', query: string) => {
@@ -283,6 +303,34 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
   const closeAddModal = useCallback(() => {
     dispatch({ type: 'SET_ADD_MODAL_OPEN', payload: false });
   }, []);
+
+  // Undo operations
+  const restoreFromUndo = useCallback(() => {
+    const undoOperation = performUndo();
+    
+    if (!undoOperation) return;
+    
+    // Restore the deleted employee(s)
+    const employeesToRestore = [undoOperation.employee];
+    if (undoOperation.children) {
+      employeesToRestore.push(...undoOperation.children);
+    }
+    
+    // Add the employees back
+    const restoredEmployees = [...state.employees, ...employeesToRestore];
+    dispatch({ type: 'SET_EMPLOYEES', payload: restoredEmployees });
+    
+    // Show success message
+    dispatch({ 
+      type: 'SET_ERROR', 
+      payload: `✅ Restored ${undoOperation.employee.name}${undoOperation.children ? ` and ${undoOperation.children.length} team member${undoOperation.children.length > 1 ? 's' : ''}` : ''}` 
+    });
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      dispatch({ type: 'SET_ERROR', payload: null });
+    }, 3000);
+  }, [state.employees, performUndo]);
 
   // Highlight operations using useHighlights hook
   const handleEmployeeHighlight = useCallback((
@@ -395,6 +443,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     updateEmployee,
     addEmployee,
     removeEmployeeBranch,
+    restoreFromUndo,
     updateFilter,
     clearFilters,
     selectEmployee,

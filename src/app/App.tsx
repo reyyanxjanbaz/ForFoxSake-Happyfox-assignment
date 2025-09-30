@@ -48,7 +48,7 @@ function NotificationArea() {
 
 // Wrapper component that connects to context
 function OrgChartCanvasWrapper() {
-  const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, dragAndDrop } = useOrgChart();
+  const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, restoreFromUndo, dragAndDrop } = useOrgChart();
 
   const handleDeleteBranch = useCallback((employeeId: string) => {
     const targetEmployee = state.employees.find(emp => emp.id === employeeId);
@@ -77,7 +77,8 @@ function OrgChartCanvasWrapper() {
       selectedEmployeeId={state.selectedEmployeeId}
       onSelectEmployee={selectEmployee}
       onDeleteBranch={handleDeleteBranch}
-  dragAndDrop={dragAndDrop}
+      onRestoreFromUndo={restoreFromUndo}
+      dragAndDrop={dragAndDrop}
       showMiniMap={true}
       showControls={true}
       showBackground={true}
