@@ -50,6 +50,15 @@ function NotificationArea() {
 function OrgChartCanvasWrapper() {
   const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, restoreFromUndo, dragAndDrop } = useOrgChart();
 
+  const handleSelectEmployee = useCallback((employeeId: string) => {
+    // Toggle selection: if the same employee is already selected, deselect them
+    if (state.selectedEmployeeId === employeeId) {
+      selectEmployee(null);
+    } else {
+      selectEmployee(employeeId);
+    }
+  }, [selectEmployee, state.selectedEmployeeId]);
+
   const handleDeleteBranch = useCallback((employeeId: string) => {
     const targetEmployee = state.employees.find(emp => emp.id === employeeId);
     const displayName = targetEmployee?.name ?? 'this employee';
@@ -75,7 +84,7 @@ function OrgChartCanvasWrapper() {
       hierarchy={state.hierarchy}
       highlightedEmployeeIds={highlightedEmployeeIds}
       selectedEmployeeId={state.selectedEmployeeId}
-      onSelectEmployee={selectEmployee}
+      onSelectEmployee={handleSelectEmployee}
       onDeleteBranch={handleDeleteBranch}
       onRestoreFromUndo={restoreFromUndo}
       dragAndDrop={dragAndDrop}
@@ -92,7 +101,12 @@ function SidebarWrapper({ onAddEmployee }: { onAddEmployee: () => void }) {
   const { state, selectEmployee, highlightedEmployeeIds } = useOrgChart();
 
   const handleEmployeeClick = (employee: Employee) => {
-    selectEmployee(employee.id);
+    // Toggle selection: if the same employee is already selected, deselect them
+    if (state.selectedEmployeeId === employee.id) {
+      selectEmployee(null);
+    } else {
+      selectEmployee(employee.id);
+    }
   };
 
   return (
