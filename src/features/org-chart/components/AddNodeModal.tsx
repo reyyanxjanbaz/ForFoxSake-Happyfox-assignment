@@ -9,6 +9,7 @@ export interface AddNodeModalProps {
   onClose: () => void;
   onEmployeeAdded?: (newEmployee: Employee) => void;
   managers: Employee[]; // Available managers for selection
+  teams: string[];
   defaultManagerId?: string | null;
   className?: string;
 }
@@ -42,12 +43,14 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
   onClose,
   onEmployeeAdded,
   managers,
+  teams,
   defaultManagerId,
   className = '',
 }) => {
   const [formData, setFormData] = useState<EmployeeFormData>({
     ...initialFormData,
     managerId: defaultManagerId || null,
+    team: teams[0] ?? '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<EmployeeFormData>>({});
@@ -92,6 +95,14 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
     return Object.keys(newErrors).length === 0;
   }, [formData]);
 
+  // Handle modal close with cleanup
+  const handleClose = useCallback(() => {
+    setFormData({ ...initialFormData, managerId: defaultManagerId || null, team: teams[0] ?? '' });
+    setErrors({});
+    setIsSubmitting(false);
+    onClose();
+  }, [defaultManagerId, onClose, teams]);
+
   // Handle form submission
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,15 +131,7 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, validateForm, onEmployeeAdded]);
-
-  // Handle modal close with cleanup
-  const handleClose = useCallback(() => {
-    setFormData({ ...initialFormData, managerId: defaultManagerId || null });
-    setErrors({});
-    setIsSubmitting(false);
-    onClose();
-  }, [defaultManagerId, onClose]);
+  }, [formData, validateForm, onEmployeeAdded, handleClose]);
 
   // Focus trap implementation
   useEffect(() => {
@@ -146,6 +149,16 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
       };
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (teams.length === 0) {
+      return;
+    }
+
+    if (!formData.team || !teams.includes(formData.team)) {
+      setFormData(prev => ({ ...prev, team: teams[0] }));
+    }
+  }, [teams, formData.team]);
 
   // Handle keyboard navigation and focus trap
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -279,15 +292,19 @@ export const AddNodeModal: React.FC<AddNodeModalProps> = ({
             <label htmlFor="employee-team" className="form-label">
               Team <span className="required">*</span>
             </label>
-            <input
+            <select
               id="employee-team"
-              type="text"
-              className={`form-input ${errors.team ? 'error' : ''}`}
+              className={`form-select ${errors.team ? 'error' : ''}`}
               value={formData.team}
               onChange={(e) => updateField('team', e.target.value)}
-              placeholder="e.g., Engineering, Marketing, Sales"
               required
-            />
+            >
+              {teams.map(team => (
+                <option key={team} value={team}>
+                  {team}
+                </option>
+              ))}
+            </select>
             {errors.team && (
               <span className="form-error" role="alert">
                 {errors.team}

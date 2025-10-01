@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ReactFlowProvider } from 'reactflow';
 import OrgChartProvider, { useOrgChart } from '../features/org-chart/context/OrgChartProvider';
@@ -155,11 +155,28 @@ function AddNodeModalWrapper({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     emp.tier === 'executive' || emp.tier === 'lead' || emp.tier === 'manager'
   );
 
+  const teams = useMemo(() => {
+    const uniqueTeams = new Set<string>();
+    state.employees.forEach((employee) => {
+      const teamName = employee.team?.trim();
+      if (teamName) {
+        uniqueTeams.add(teamName);
+      }
+    });
+
+    if (uniqueTeams.size === 0) {
+      return ['Unassigned'];
+    }
+
+    return Array.from(uniqueTeams).sort((a, b) => a.localeCompare(b));
+  }, [state.employees]);
+
   return (
     <AddNodeModal
       isOpen={isOpen}
       onClose={onClose}
       managers={managers}
+      teams={teams}
       onEmployeeAdded={(employee) => {
         addEmployee(employee);
         selectEmployee(employee.id);
@@ -284,10 +301,24 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                padding: 0,
               }}
               title="Add Employee"
             >
-              +
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
             </motion.button>
 
             {/* GitHub Button */}
@@ -329,14 +360,14 @@ function App() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                backgroundColor: '#ffffffff',
+                backgroundColor: 'transparent',
                 border: '0px solid #e5e7eb',
                 cursor: 'pointer',
                 boxShadow: '0 4px 12px rgba(107, 114, 128, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0px',
+                padding: 0,
                 overflow: 'hidden',
               }}
               title="Help & Documentation"
@@ -348,7 +379,8 @@ function App() {
                   width: '80%',
                   height: '80%',
                   objectFit: 'cover',
-                  borderRadius: '50%',
+                  borderRadius: '0%',
+                  display: 'block',
                 }}
               />
             </motion.button>
@@ -358,7 +390,7 @@ function App() {
           <motion.div 
             className={`sidebar-panel ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}
             animate={{ 
-              width: (isMobile || isTablet) ? '100%' : sidebarCollapsed ? '60px' : '320px',
+              width: (isMobile || isTablet) ? '100%' : sidebarCollapsed ? '60px' : '360px',
               height: (isMobile || isTablet) && sidebarCollapsed ? '60px' : 'auto'
             }}
             transition={{ 
@@ -390,8 +422,12 @@ function App() {
                     whileHover={!isMobile ? { scale: 1.05 } : {}}
                     whileTap={{ scale: 0.95 }}
                     style={{
-                      padding: 'var(--space-2)',
-                      borderRadius: '16.9%',
+                      width: '48px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '12px',
                       backgroundColor: 'var(--color-primary)',
                       border: '1px solid var(--color-border)',
                       color: 'white',
@@ -426,8 +462,12 @@ function App() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   style={{
-                    padding: 'var(--space-2)',
-                    borderRadius: '16.9%',
+                    width: '48px',
+                    height: '48px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '12px',
                     backgroundColor: 'var(--color-primary)',
                     border: '1px solid var(--color-border)',
                     color: 'white',

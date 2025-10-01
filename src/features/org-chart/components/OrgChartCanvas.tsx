@@ -14,12 +14,12 @@ import {
   type NodeChange,
   type ReactFlowInstance,
 } from 'reactflow';
-import { DndContext, closestCenter, type DragEndEvent, type DragStartEvent, type DragOverEvent } from '@dnd-kit/core';
+import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
 import { buildOrgChart, type OrgChartNode, type DragCallbacks } from '../services/graphBuilder';
-import OrgChartNodeComponent from './OrgChartNode';
+import OrgChartNodeComponent, { type OrgChartNodeData } from './OrgChartNode';
 import type { UseDragAndDropReturn } from '../hooks/useDragAndDrop';
 import { UndoAlert } from './UndoAlert';
 
@@ -244,8 +244,26 @@ export default function OrgChartCanvas({
           {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
           {showMiniMap && (
             <MiniMap
-              nodeStrokeColor={(node) => (node.data?.isHighlighted ? '#fb923c' : '#1f2937')}
-              nodeColor={(node) => (node.data?.isHighlighted ? '#fde68a' : '#cbd5f5')}
+              nodeStrokeColor={(node) => {
+                const data = node.data as OrgChartNodeData | undefined;
+                if (data?.isHighlighted || data?.isSelected) {
+                  return '#fb923c';
+                }
+                if (data?.isBranchMember) {
+                  return '#facc15';
+                }
+                return '#1f2937';
+              }}
+              nodeColor={(node) => {
+                const data = node.data as OrgChartNodeData | undefined;
+                if (data?.isHighlighted || data?.isSelected) {
+                  return '#fde68a';
+                }
+                if (data?.isBranchMember) {
+                  return '#fef08a';
+                }
+                return '#cbd5f5';
+              }}
               maskColor="rgba(15, 23, 42, 0.12)"
             />
           )}
