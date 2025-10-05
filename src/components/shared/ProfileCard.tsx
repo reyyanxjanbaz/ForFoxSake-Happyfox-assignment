@@ -506,15 +506,19 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       tabIndex={(onClick || onSelect) ? 0 : -1}
       role={(onClick || onSelect) ? 'button' : undefined}
       onMouseEnter={() => {
+        if (!onClick) return;
         setIsHovered(true);
       }}
       onMouseLeave={() => {
+        if (!onClick) return;
         setIsHovered(false);
       }}
       onFocus={() => {
+        if (!onClick) return;
         setIsHovered(true);
       }}
       onBlur={() => {
+        if (!onClick) return;
         setIsHovered(false);
       }}
     >

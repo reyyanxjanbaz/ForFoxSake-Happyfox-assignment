@@ -361,14 +361,14 @@ function App() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                backgroundColor: 'transparent',
-                border: '0px solid #e5e7eb',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.92) 100%)',
+                border: 'none',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(107, 114, 128, 0.3)',
+                boxShadow: '0 4px 16px rgba(132, 132, 132, 0.28)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: 0,
+                padding: '8px',
                 overflow: 'hidden',
               }}
               title="Help & Documentation"
@@ -377,10 +377,10 @@ function App() {
                 src="/ummm-actually.png"
                 alt="Help"
                 style={{
-                  width: '80%',
-                  height: '80%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: '0%',
+                  borderRadius: '50%',
                   display: 'block',
                 }}
               />

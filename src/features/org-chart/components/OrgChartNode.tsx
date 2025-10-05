@@ -159,9 +159,9 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   })();
 
   const deleteButtonStyle = useMemo<React.CSSProperties>(() => ({
-    minWidth: isDeleteHovered ? '92px' : '28px',
-    width: isDeleteHovered ? 'auto' : '28px',
-    height: '28px',
+    minWidth: isDeleteHovered ? '72px' : '22px',
+    width: isDeleteHovered ? 'auto' : '22px',
+    height: '22px',
     borderRadius: '999px',
     backgroundColor: isDeleteHovered ? 'rgba(220, 38, 38, 0.95)' : 'rgba(15, 23, 42, 0.8)',
     color: '#ffffff',
@@ -170,10 +170,10 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: isDeleteHovered ? '0.75rem' : '1rem',
+    fontSize: isDeleteHovered ? '0.75rem' : '0.7rem',
     fontWeight: 600,
     lineHeight: 1,
-    padding: isDeleteHovered ? '0 14px' : '0',
+    padding: isDeleteHovered ? '0 12px' : '0',
     transition: 'all 0.2s ease',
     boxShadow: isDeleteHovered ? '0 10px 18px rgba(220, 38, 38, 0.28)' : '0 6px 14px rgba(15, 23, 42, 0.15)',
     pointerEvents: 'auto',
@@ -200,7 +200,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   }), [isDragHovered, isDragSource]);
 
   const hoverRing = '0 0 0 3px rgba(249, 115, 22, 0.45)';
-  const shouldHideBorderForHover = isNodeHovered && !isDragSource && !canAcceptDrop && !isSelected && !isHighlighted && !isBranchMember;
+  const shouldHideBorderForHover = isNodeHovered && !isDragSource && !canAcceptDrop;
   const appliedBorderColor = shouldHideBorderForHover ? 'transparent' : borderColor;
   const appliedBoxShadow = isNodeHovered ? `${boxShadow}, ${hoverRing}` : boxShadow;
 
@@ -270,7 +270,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               onMouseEnter={() => setIsDeleteHovered(true)}
               onMouseLeave={() => setIsDeleteHovered(false)}
             >
-              {isDeleteHovered ? 'Delete' : '×'}
+              {isDeleteHovered ? 'Delete' : '✕'}
             </button>
           </div>
         )}
