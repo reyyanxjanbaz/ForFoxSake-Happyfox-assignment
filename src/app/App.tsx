@@ -85,6 +85,7 @@ function OrgChartCanvasWrapper() {
       highlightedEmployeeIds={highlightedEmployeeIds}
       selectedEmployeeId={state.selectedEmployeeId}
       onSelectEmployee={handleSelectEmployee}
+      onClearSelection={() => selectEmployee(null)}
       onDeleteBranch={handleDeleteBranch}
       onRestoreFromUndo={restoreFromUndo}
       dragAndDrop={dragAndDrop}

@@ -1,84 +1,83 @@
-// @ts-nocheck
-// Unit tests for filter predicate helpers - will fail until filter utilities implemented
+import {
+  filterByName,
+  filterByDesignation,
+  filterByEmployeeId,
+  combineFilters,
+  initialFilterState,
+  updateFilterQuery,
+  type FilterState,
+} from '../../../src/features/org-chart/state/filterState';
+import type { Employee } from '../../../src/features/org-chart/state/employee';
 
-describe('Filter Employees Utilities', () => {
+let employeeCounter = 0;
+
+const createEmployee = (overrides: Partial<Employee>): Employee => ({
+  id: overrides.id ?? `emp-${++employeeCounter}`,
+  name: overrides.name ?? 'Sample Employee',
+  designation: overrides.designation ?? 'Engineer',
+  tier: overrides.tier ?? 'individual',
+  team: overrides.team ?? 'Engineering',
+  managerId: overrides.managerId ?? null,
+  photoAssetKey: overrides.photoAssetKey ?? null,
+  photoUrl: overrides.photoUrl ?? null,
+  employeeId: overrides.employeeId ?? '#1000',
+  highlightState: overrides.highlightState ?? { active: false, reason: null },
+  lastUpdatedAt: overrides.lastUpdatedAt ?? new Date().toISOString(),
+});
+
+const sampleEmployees: Employee[] = [
+  createEmployee({ id: 'emp-1', name: 'Alice Johnson', designation: 'Engineer', employeeId: '#1234' }),
+  createEmployee({ id: 'emp-2', name: 'Bob Smith', designation: 'Product Manager', employeeId: '#5678' }),
+  createEmployee({ id: 'emp-3', name: 'Charlie Brown', designation: 'Engineer', employeeId: '#9012' }),
+];
+
+describe('Filter utilities', () => {
   describe('filterByName', () => {
-    it('should perform case-insensitive partial matching', () => {
-      // Mock function that should exist after implementation
-      const filterByName = (employees: any[], query: string) => {
-        // Placeholder - actual implementation needed
-        throw new Error('filterByName not implemented');
-      };
-
-      const employees = [
-        { id: '1', name: 'John Doe', designation: 'Engineer' },
-        { id: '2', name: 'Jane Smith', designation: 'Manager' },
-        { id: '3', name: 'Bob Johnson', designation: 'Designer' },
-      ];
-
-      // These assertions will fail until actual filterByName is implemented
-      expect(() => filterByName(employees, 'john')).not.toThrow();
-      expect(() => filterByName(employees, 'JANE')).not.toThrow();
-      expect(() => filterByName(employees, 'doe')).not.toThrow();
+    it('matches employees with case-insensitive partial queries', () => {
+      const results = filterByName(sampleEmployees, 'ali');
+      expect(results.map(emp => emp.id)).toEqual(['emp-1']);
     });
 
-    it('should return empty array for no matches', () => {
-      const filterByName = () => {
-        throw new Error('filterByName not implemented');
-      };
-      
-      expect(() => filterByName([], 'nonexistent')).toThrow();
+    it('returns all employees when query is empty', () => {
+      const results = filterByName(sampleEmployees, '   ');
+      expect(results).toEqual(sampleEmployees);
     });
   });
 
   describe('filterByDesignation', () => {
-    it('should perform case-insensitive partial matching', () => {
-      const filterByDesignation = () => {
-        throw new Error('filterByDesignation not implemented');
-      };
-
-      // Will fail until implementation
-      expect(() => filterByDesignation([], 'engineer')).toThrow();
+    it('finds matches regardless of casing', () => {
+      const results = filterByDesignation(sampleEmployees, 'product');
+      expect(results.map(emp => emp.id)).toEqual(['emp-2']);
     });
   });
 
   describe('filterByEmployeeId', () => {
-    it('should perform exact matching only', () => {
-      const filterByEmployeeId = () => {
-        throw new Error('filterByEmployeeId not implemented');
-      };
-
-      // Will fail until implementation
-      expect(() => filterByEmployeeId([], 'EMP001')).toThrow();
-    });
-
-    it('should be case-sensitive for employee IDs', () => {
-      const filterByEmployeeId = () => {
-        throw new Error('filterByEmployeeId not implemented');
-      };
-
-      // Will fail until implementation
-      expect(() => filterByEmployeeId([], 'emp001')).toThrow();
+    it('matches by formatted employee id and numeric shorthand', () => {
+      expect(filterByEmployeeId(sampleEmployees, '#5678')).toHaveLength(1);
+      expect(filterByEmployeeId(sampleEmployees, '5678')).toHaveLength(1);
+      expect(filterByEmployeeId(sampleEmployees, '#0000')).toHaveLength(0);
     });
   });
 
   describe('combineFilters', () => {
-    it('should apply AND logic to multiple active filters', () => {
-      const combineFilters = () => {
-        throw new Error('combineFilters not implemented');
-      };
+    const activateFilter = (
+      state: FilterState,
+      field: 'name' | 'designation' | 'employeeId',
+      query: string
+    ) => updateFilterQuery(state, field, query, sampleEmployees);
 
-      // Will fail until implementation
-      expect(() => combineFilters({}, [], {})).toThrow();
+    it('applies AND logic across active filters', () => {
+      let state = activateFilter(initialFilterState, 'name', 'alice');
+      expect(state.results).toEqual(['emp-1']);
+      state = activateFilter(state, 'designation', 'engineer');
+      expect(state.results).toEqual(['emp-1']);
+      const results = combineFilters(state, sampleEmployees);
+      expect(results).toEqual(['emp-1']);
     });
 
-    it('should return all employees when no filters are active', () => {
-      const combineFilters = () => {
-        throw new Error('combineFilters not implemented');
-      };
-
-      // Will fail until implementation
-      expect(() => combineFilters({}, [], {})).toThrow();
+    it('returns empty array when no filters are active', () => {
+      const results = combineFilters(initialFilterState, sampleEmployees);
+      expect(results).toEqual([]);
     });
   });
 });

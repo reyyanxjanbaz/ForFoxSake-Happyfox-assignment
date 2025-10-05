@@ -35,6 +35,7 @@ interface OrgChartCanvasProps {
   highlightedEmployeeIds?: string[];
   selectedEmployeeId?: string | null;
   onSelectEmployee?: (employeeId: string) => void;
+  onClearSelection?: () => void;
   onDeleteBranch?: (employeeId: string) => void;
   onRestoreFromUndo?: () => void;
   dragAndDrop?: UseDragAndDropReturn;
@@ -50,6 +51,7 @@ export default function OrgChartCanvas({
   highlightedEmployeeIds = [],
   selectedEmployeeId = null,
   onSelectEmployee,
+  onClearSelection,
   onDeleteBranch,
   onRestoreFromUndo,
   dragAndDrop,
@@ -239,6 +241,10 @@ export default function OrgChartCanvas({
           panOnDrag={false}
           elementsSelectable={false}
           selectNodesOnDrag={false}
+          onPaneClick={() => {
+            if (!allowInteraction) return;
+            onClearSelection?.();
+          }}
         >
           {showBackground && <Background gap={24} size={1.5} />}
           {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}

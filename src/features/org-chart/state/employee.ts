@@ -99,3 +99,70 @@ export const promoteEmployee = (
     lastUpdatedAt: new Date().toISOString(),
   };
 };
+
+export interface HighlightUpdateOptions {
+  active: boolean;
+  reason: 'filter' | 'drag' | null;
+}
+
+export const applyHighlightChanges = (
+  employees: Employee[],
+  employeeIds: string[],
+  { active, reason }: HighlightUpdateOptions
+): Employee[] => {
+  const now = new Date().toISOString();
+
+  return employees.map((employee) => {
+    const isTargetEmployee = employeeIds.includes(employee.id);
+
+    if (reason === 'filter') {
+      if (active && isTargetEmployee) {
+        return {
+          ...employee,
+          highlightState: {
+            active: true,
+            reason: 'filter' as const,
+          },
+          lastUpdatedAt: now,
+        };
+      }
+
+      if (active && !isTargetEmployee && employee.highlightState.reason === 'filter') {
+        return {
+          ...employee,
+          highlightState: {
+            active: false,
+            reason: null,
+          },
+          lastUpdatedAt: now,
+        };
+      }
+    }
+
+    if (!active && reason === null) {
+      if (employee.highlightState.reason === 'filter' || isTargetEmployee) {
+        return {
+          ...employee,
+          highlightState: {
+            active: false,
+            reason: null,
+          },
+          lastUpdatedAt: now,
+        };
+      }
+    }
+
+    if (reason === 'drag' && isTargetEmployee) {
+      return {
+        ...employee,
+        highlightState: {
+          active,
+          reason: active ? ('drag' as const) : null,
+        },
+        lastUpdatedAt: now,
+      };
+    }
+
+    return employee;
+  });
+};

@@ -1,7 +1,7 @@
 // Context provider that integrates all org chart state and services
 
 import React, { createContext, useContext, useCallback, useEffect, useReducer } from 'react';
-import type { Employee } from '../state/employee';
+import { applyHighlightChanges, type Employee } from '../state/employee';
 import type { FilterState } from '../state/filterState';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import { buildOrgHierarchy, getDescendants } from '../state/orgHierarchy';
@@ -335,61 +335,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
     active: boolean,
     reason: 'filter' | 'drag' | null
   ) => {
-    
-    const updatedEmployees = state.employees.map(employee => {
-      // If we're applying new filter highlights
-      if (active && reason === 'filter' && employeeIds.includes(employee.id)) {
-        return {
-          ...employee,
-          highlightState: {
-            active: true,
-            reason: 'filter' as const,
-          },
-          lastUpdatedAt: new Date().toISOString(),
-        };
-      }
-      
-      // If we're clearing filter highlights (reason === null means clearing)
-      if (!active && reason === null) {
-        // Clear ALL filter highlights, regardless of whether the employee is in the list
-        if (employee.highlightState.reason === 'filter') {
-          return {
-            ...employee,
-            highlightState: {
-              active: false,
-              reason: null,
-            },
-            lastUpdatedAt: new Date().toISOString(),
-          };
-        }
-        // Also clear specific employees in the list
-        if (employeeIds.includes(employee.id)) {
-          return {
-            ...employee,
-            highlightState: {
-              active: false,
-              reason: null,
-            },
-            lastUpdatedAt: new Date().toISOString(),
-          };
-        }
-      }
-      
-      // If we're applying drag highlights
-      if (reason === 'drag' && employeeIds.includes(employee.id)) {
-        return {
-          ...employee,
-          highlightState: {
-            active,
-            reason: 'drag' as const,
-          },
-          lastUpdatedAt: new Date().toISOString(),
-        };
-      }
-      
-      return employee;
-    });
-    
+    const updatedEmployees = applyHighlightChanges(state.employees, employeeIds, { active, reason });
     dispatch({ type: 'UPDATE_EMPLOYEE_HIGHLIGHTS', payload: updatedEmployees });
   }, [state.employees]);
 
