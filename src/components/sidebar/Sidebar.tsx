@@ -22,6 +22,11 @@ interface TreeNode {
   isExpanded: boolean;
 }
 
+const THREAD_COLOR = 'rgba(249, 115, 22, 0.45)';
+const THREAD_LINE_WIDTH = 2;
+const THREAD_FIRST_LEVEL_INDENT = 28;
+const THREAD_INDENT_STEP = 28;
+
 const Sidebar: React.FC<SidebarProps> = ({
   employees = [],
   hierarchy,
@@ -33,10 +38,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Automatically expand roots and first-level children when hierarchy updates for the first time
   useEffect(() => {
-    if (!hierarchy) return;
+    if (!hierarchy || hasUserInteracted) return;
 
     setExpandedNodes(prev => {
       if (prev.size > 0) {
@@ -51,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       });
       return initial;
     });
-  }, [hierarchy]);
+  }, [hierarchy, hasUserInteracted]);
 
   // Ensure highlighted employees and their ancestors are expanded for visibility
   useEffect(() => {
@@ -125,6 +131,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [employees, hierarchy, expandedNodes]);
 
   const toggleNodeExpansion = (employeeId: string) => {
+    setHasUserInteracted(true);
     setExpandedNodes(prev => {
       const newSet = new Set(prev);
       if (newSet.has(employeeId)) {
@@ -134,6 +141,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
       return newSet;
     });
+  };
+
+  const expandAllNodes = () => {
+    setHasUserInteracted(true);
+    setExpandedNodes(new Set(employees.map(emp => emp.id)));
+  };
+
+  const collapseAllNodes = () => {
+    setHasUserInteracted(true);
+    if (!hierarchy) {
+      setExpandedNodes(new Set());
+      return;
+    }
+
+    const next = new Set<string>();
+
+    hierarchy.roots.forEach(rootId => {
+      next.add(rootId);
+      const childIds = hierarchy.children[rootId] || [];
+      childIds.forEach(childId => next.add(childId));
+    });
+
+    setExpandedNodes(next);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent, employeeId: string, hasChildren: boolean) => {
@@ -169,12 +199,37 @@ const Sidebar: React.FC<SidebarProps> = ({
     const { employee, children, level } = node;
     const hasChildren = children.length > 0;
     const isExpanded = expandedNodes.has(employee.id) || (expandedNodes.size === 0 && level < 2);
-  const isHighlighted = highlightedEmployees.includes(employee.id) || employee.id === selectedEmployeeId;
+    const isHighlighted = highlightedEmployees.includes(employee.id) || employee.id === selectedEmployeeId;
+
+    const hasThread = level > 0;
+    const indentOffset = hasThread
+      ? THREAD_FIRST_LEVEL_INDENT + (level - 1) * THREAD_INDENT_STEP
+      : 0;
 
     const nodeStyle: React.CSSProperties = {
-      marginLeft: `${level * 16}px`,
       marginBottom: 'var(--space-1)',
+      position: 'relative',
     };
+
+    const threadElement = hasThread
+      ? (
+          <span
+            key={`thread-${employee.id}`}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: indentOffset - THREAD_INDENT_STEP / 2,
+              width: THREAD_LINE_WIDTH,
+              backgroundColor: THREAD_COLOR,
+              borderRadius: THREAD_LINE_WIDTH,
+              opacity: 0.9,
+              pointerEvents: 'none',
+            }}
+          />
+        )
+      : null;
 
     const expanderStyle: React.CSSProperties = {
       display: 'flex',
@@ -182,11 +237,17 @@ const Sidebar: React.FC<SidebarProps> = ({
       gap: 'var(--space-2)',
       padding: 'var(--space-1)',
       cursor: hasChildren ? 'pointer' : 'default',
-      borderRadius: 'var(--radius-md)',
+      borderRadius: 14,
       transition: 'background-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease',
       backgroundColor: 'rgba(255, 255, 255, 0.65)',
       border: '1px solid rgba(249, 115, 22, 0.12)',
       boxShadow: '0 8px 18px rgba(249, 115, 22, 0.08)',
+      flexGrow: 0,
+      flexShrink: 1,
+      width: '100%',
+      maxWidth: '300px',
+      minWidth: '220px',
+      overflow: 'hidden',
     };
 
     const expanderButtonStyle: React.CSSProperties = {
@@ -201,6 +262,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
     };
 
+    const contentWrapperStyle: React.CSSProperties = {
+      position: 'relative',
+      marginLeft: indentOffset,
+    };
+
     return (
       <li
         key={employee.id}
@@ -212,31 +278,34 @@ const Sidebar: React.FC<SidebarProps> = ({
         style={nodeStyle}
         onKeyDown={(e) => handleKeyDown(e, employee.id, hasChildren)}
       >
-        <div style={expanderStyle}>
+        {threadElement}
+        <div style={contentWrapperStyle}>
+          <div style={expanderStyle}>
           {/* Expander button */}
-          <button
-            style={expanderButtonStyle}
-            onClick={() => hasChildren && toggleNodeExpansion(employee.id)}
-            aria-label={
-              hasChildren
-                ? `${isExpanded ? 'Collapse' : 'Expand'} ${employee.name}'s team`
-                : undefined
-            }
-            tabIndex={-1} // Let parent handle focus
-          >
-            {hasChildren ? '▶' : ''}
-          </button>
+            <button
+              style={expanderButtonStyle}
+              onClick={() => hasChildren && toggleNodeExpansion(employee.id)}
+              aria-label={
+                hasChildren
+                  ? `${isExpanded ? 'Collapse' : 'Expand'} ${employee.name}'s team`
+                  : undefined
+              }
+              tabIndex={-1} // Let parent handle focus
+            >
+              {hasChildren ? '▶' : ''}
+            </button>
 
-          {/* Profile Card */}
-          <div style={{ flex: 1 }}>
-            <ProfileCard
-              employee={employee}
-              isHighlighted={isHighlighted}
-              size="small"
-              showRole={true}
-              showTeam={false}
-              onClick={onEmployeeClick}
-            />
+            {/* Profile Card */}
+            <div style={{ flex: 1, minWidth: 0, borderRadius: 'inherit', overflow: 'hidden' }}>
+              <ProfileCard
+                employee={employee}
+                isHighlighted={isHighlighted}
+                size="small"
+                showRole={true}
+                showTeam={false}
+                onClick={onEmployeeClick}
+              />
+            </div>
           </div>
         </div>
 
@@ -376,33 +445,59 @@ const Sidebar: React.FC<SidebarProps> = ({
           + Add Employee
         </button>
         
-        <button
+        <div
           style={{
-            width: '100%',
-            padding: 'var(--space-2)',
-            backgroundColor: 'rgba(249, 115, 22, 0.08)',
-            color: 'var(--color-orange-700)',
-            border: '1px solid rgba(249, 115, 22, 0.15)',
-            borderRadius: 'var(--border-radius)',
-            fontSize: '0.75rem',
-            cursor: 'pointer',
+            display: 'flex',
+            gap: 'var(--space-2)',
             marginTop: 'var(--space-2)',
-            transition: 'all var(--duration-fast) ease',
-          }}
-          onClick={() => {
-            // Expand all nodes
-            const allIds = new Set(employees.map(emp => emp.id));
-            setExpandedNodes(allIds);
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.14)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.08)';
           }}
         >
-          Expand All
-        </button>
+          <button
+            style={{
+              flex: 1,
+              padding: 'var(--space-2)',
+              backgroundColor: 'rgba(249, 115, 22, 0.08)',
+              color: 'var(--color-orange-700)',
+              border: '1px solid rgba(249, 115, 22, 0.15)',
+              borderRadius: 'var(--border-radius)',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              transition: 'all var(--duration-fast) ease',
+            }}
+            onClick={expandAllNodes}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.14)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(249, 115, 22, 0.08)';
+            }}
+          >
+            Expand All
+          </button>
+
+          <button
+            style={{
+              flex: 1,
+              padding: 'var(--space-2)',
+              backgroundColor: 'rgba(148, 163, 184, 0.12)',
+              color: 'var(--color-gray-700)',
+              border: '1px solid rgba(148, 163, 184, 0.24)',
+              borderRadius: 'var(--border-radius)',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+              transition: 'all var(--duration-fast) ease',
+            }}
+            onClick={collapseAllNodes}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(148, 163, 184, 0.18)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(148, 163, 184, 0.12)';
+            }}
+          >
+            Collapse Till Manegers
+          </button>
+        </div>
       </div>
     </div>
   );
