@@ -225,7 +225,7 @@ function App() {
   return (
     <OrgChartProvider>
       <ReactFlowProvider>
-        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+  <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
           {/* Notification Area */}
           <NotificationArea />
           
@@ -251,8 +251,8 @@ function App() {
             <span
               aria-hidden
               style={{
-                width: '12px',
-                height: '12px',
+                width: '15px',
+                height: '15px',
                 borderRadius: '50%',
                 background: 'var(--color-primary)',
                 boxShadow: '0 0 12px rgba(249, 115, 22, 0.35)',
@@ -260,7 +260,7 @@ function App() {
             />
             <span
               style={{
-                fontSize: '1rem',
+                fontSize: '1.25rem',
                 fontWeight: 700,
                 letterSpacing: '0.04em',
                 textTransform: 'uppercase',
@@ -420,7 +420,7 @@ function App() {
                     color: 'var(--color-primary)',
                     margin: 0
                   }}>
-                    ForFoxSake
+                    Filter & Search
                   </h1>
                   <motion.button
                     onClick={toggleSidebar}
