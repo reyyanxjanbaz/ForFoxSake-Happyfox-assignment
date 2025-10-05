@@ -1,6 +1,6 @@
 // Script to generate placeholder profile photos for lazy loading demo
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 
 const colors = [

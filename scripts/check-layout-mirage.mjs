@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* global console, process */
+
 import { makeServer } from '../src/mocks/server.ts';
 import { employeeApi } from '../src/features/org-chart/services/api.ts';
 

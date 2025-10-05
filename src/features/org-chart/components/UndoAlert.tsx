@@ -37,17 +37,23 @@ export const UndoAlert: React.FC<UndoAlertProps> = ({ onUndo }) => {
       return;
     }
 
-    const interval = setInterval(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          window.clearInterval(intervalId);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [isUndoAlertVisible]);
   
 

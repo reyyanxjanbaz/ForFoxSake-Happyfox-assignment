@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* global console, process */
+
 import { generateOrgHierarchy } from '../src/features/org-chart/utils/dummyData.ts';
 import { buildOrgHierarchy } from '../src/features/org-chart/state/orgHierarchy.ts';
 import { buildOrgChart } from '../src/features/org-chart/services/graphBuilder.ts';

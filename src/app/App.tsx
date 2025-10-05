@@ -391,7 +391,11 @@ function App() {
           <motion.div 
             className={`sidebar-panel ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}
             animate={{ 
-              width: (isMobile || isTablet) ? '100%' : sidebarCollapsed ? '60px' : '360px',
+              width: (isMobile || isTablet)
+                ? '100%'
+                : sidebarCollapsed
+                  ? 'var(--sidebar-width-collapsed)'
+                  : 'var(--sidebar-width)',
               height: (isMobile || isTablet) && sidebarCollapsed ? '60px' : 'auto'
             }}
             transition={{ 

@@ -5,7 +5,7 @@ describe('Build Hierarchy Utilities', () => {
   describe('buildOrgHierarchy', () => {
     it('should create deterministic hierarchy structure from employee list', () => {
       // Mock function that should exist after implementation
-      const buildOrgHierarchy = (employees: any[]) => {
+  const buildOrgHierarchy = (_employees: unknown[]) => {
         // Placeholder - actual implementation needed
         throw new Error('buildOrgHierarchy not implemented');
       };
@@ -50,7 +50,7 @@ describe('Build Hierarchy Utilities', () => {
 
   describe('detectCycle', () => {
     it('should prevent employee from becoming their own manager', () => {
-      const detectCycle = (employeeId: string, newManagerId: string, hierarchy: any) => {
+  const detectCycle = (_employeeId: string, _newManagerId: string, _hierarchy: unknown) => {
         throw new Error('detectCycle not implemented');
       };
 

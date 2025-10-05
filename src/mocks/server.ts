@@ -109,7 +109,7 @@ export function makeServer({ environment = 'development' } = {}) {
       
       // Seed database with generated hierarchy
       orgData.forEach(employee => {
-        server.create('employee', employee as any);
+        server.create('employee', employee as unknown as Record<string, unknown>);
       });
     },
 

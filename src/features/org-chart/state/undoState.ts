@@ -12,7 +12,7 @@ export interface UndoOperation {
 interface UndoState {
   lastOperation: UndoOperation | null;
   isUndoAlertVisible: boolean;
-  undoTimeoutId: NodeJS.Timeout | null;
+  undoTimeoutId: ReturnType<typeof setTimeout> | null;
   
   // Actions
   recordDelete: (operation: Omit<UndoOperation, 'timestamp'>) => void;

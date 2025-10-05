@@ -48,7 +48,7 @@ const initialState: OrgChartState = {
   isAddModalOpen: false,
 };
 
-const fallbackEmployeeId = (employee: Employee, index: number): string => {
+const fallbackEmployeeId = (employee: Employee): string => {
   if (employee.employeeId && employee.employeeId.trim().length > 0) {
     return employee.employeeId.trim();
   }
@@ -59,8 +59,8 @@ const fallbackEmployeeId = (employee: Employee, index: number): string => {
 };
 
 const ensureEmployeesHaveIds = (employees: Employee[]): Employee[] => {
-  return employees.map((employee, index) => {
-    const normalizedId = fallbackEmployeeId(employee, index);
+  return employees.map((employee) => {
+    const normalizedId = fallbackEmployeeId(employee);
     if (normalizedId === employee.employeeId) {
       return employee;
     }
@@ -445,6 +445,7 @@ export const OrgChartProvider: React.FC<OrgChartProviderProps> = ({ children }) 
 };
 
 // Hook to use the context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useOrgChart = (): OrgChartContextValue => {
   const context = useContext(OrgChartContext);
   if (context === undefined) {

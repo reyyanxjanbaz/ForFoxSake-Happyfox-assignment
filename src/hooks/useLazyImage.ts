@@ -1,6 +1,6 @@
 // Hook for implementing lazy loading of images with intersection observer
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type MutableRefObject } from 'react';
 
 export interface UseLazyImageOptions {
   src: string;
@@ -10,7 +10,7 @@ export interface UseLazyImageOptions {
 }
 
 export interface UseLazyImageReturn {
-  imgRef: React.RefObject<any>;
+  imgRef: MutableRefObject<globalThis.HTMLImageElement | null>;
   isLoaded: boolean;
   isError: boolean;
   isInView: boolean;
@@ -23,7 +23,7 @@ export const useLazyImage = ({
   rootMargin = '50px',
   threshold = 0.1,
 }: UseLazyImageOptions): UseLazyImageReturn => {
-  const imgRef = useRef<any>(null);
+  const imgRef = useRef<globalThis.HTMLImageElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isInView, setIsInView] = useState(false);

@@ -5,7 +5,7 @@ describe('Dummy Data Generator', () => {
   describe('generateEmployee', () => {
     it('should create employee with Faker-based realistic data', () => {
       // Mock function that should exist after implementation
-      const generateEmployee = (tier: string, managerId?: string) => {
+  const generateEmployee = (_tier: string, _managerId?: string) => {
         // Placeholder - actual implementation needed
         throw new Error('generateEmployee not implemented');
       };
