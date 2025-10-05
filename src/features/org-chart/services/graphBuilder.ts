@@ -5,7 +5,7 @@ import type { Employee } from '../state/employee';
 import type { OrgHierarchy } from '../state/orgHierarchy';
 import type { OrgChartNodeData } from '../components/OrgChartNode';
 
-const NODE_WIDTH = 280;
+const NODE_WIDTH = 320;
 const NODE_HEIGHT = 160;
 const HORIZONTAL_SPACING = 80;
 const VERTICAL_SPACING = 160;

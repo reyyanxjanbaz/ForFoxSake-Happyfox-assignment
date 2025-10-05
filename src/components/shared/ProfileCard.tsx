@@ -1,6 +1,6 @@
 // Single-layer ProfileCard component used across the org chart and sidebar views
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import type { DOMAttributes } from 'react';
 import { useLazyImage } from '../../hooks/useLazyImage';
 import type { Employee } from '../../features/org-chart/state/employee';
@@ -205,6 +205,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
   enableDragAndDrop = false,
   dragHandlers,
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
   const photoSrc = useMemo(() => {
     if (employee.photoUrl) return employee.photoUrl;
     if (employee.photoAssetKey) {
@@ -329,7 +330,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       return {
         display: 'flex',
         flexDirection: 'column',
-        width: '280px',
+  width: '320px',
   height: '160px',
         padding: sizeTokens.padding,
         gap: sizeTokens.gap,
@@ -352,6 +353,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
     }
 
     // Regular ProfileCard styling
+    const baseBorderColor = isHighlighted ? tierTokens.border : themeTokens.borderDefault;
+    const baseShadow = isHighlighted ? themeTokens.highlightShadow : themeTokens.shadow;
+    const hoverRing = '0 0 0 3px rgba(249, 115, 22, 0.45)';
+    const combinedShadow = isHovered ? hoverRing : baseShadow;
+
     return {
       display: 'flex',
       flexDirection: 'column',
@@ -361,15 +367,15 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       gap: sizeTokens.gap,
       borderRadius: 14,
       background: themeTokens.background,
-      border: `1px solid ${isHighlighted ? tierTokens.border : themeTokens.borderDefault}`,
-      boxShadow: isHighlighted ? themeTokens.highlightShadow : themeTokens.shadow,
+      border: `1px solid ${isHovered || isHighlighted ? tierTokens.border : baseBorderColor}`,
+      boxShadow: combinedShadow,
       transition: 'transform 150ms ease, box-shadow 150ms ease',
       cursor: onClick ? 'pointer' : 'default',
       outline: 'none',
       overflow: 'hidden',
       position: 'relative',
     };
-  }, [isOrgChartNode, isHighlighted, isSelected, isBranchMember, onClick, onSelect, sizeTokens, themeTokens, tierTokens, dragState, dragHandlers, enableDragAndDrop, employee.id]);
+  }, [isOrgChartNode, isHighlighted, isSelected, isBranchMember, onClick, onSelect, sizeTokens, themeTokens, tierTokens, dragState, dragHandlers, enableDragAndDrop, employee.id, isHovered]);
 
   const accentBarStyles = useMemo<React.CSSProperties>(() => ({
     height: themeTokens.accentBarHeight,
@@ -499,21 +505,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({
       onKeyDown={(onClick || onSelect) ? handleKeyDown : undefined}
       tabIndex={(onClick || onSelect) ? 0 : -1}
       role={(onClick || onSelect) ? 'button' : undefined}
-      onMouseEnter={(event) => {
-        if (isOrgChartNode || !onClick) return;
-        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+      onMouseEnter={() => {
+        setIsHovered(true);
       }}
-      onMouseLeave={(event) => {
-        if (isOrgChartNode || !onClick) return;
-        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+      onMouseLeave={() => {
+        setIsHovered(false);
       }}
-      onFocus={(event) => {
-        if (isOrgChartNode || !onClick) return;
-        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+      onFocus={() => {
+        setIsHovered(true);
       }}
-      onBlur={(event) => {
-        if (isOrgChartNode || !onClick) return;
-        (event.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+      onBlur={() => {
+        setIsHovered(false);
       }}
     >
       {/* Org Chart Node Action Buttons */}

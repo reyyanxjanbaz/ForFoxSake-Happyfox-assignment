@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { ProfileCard } from '../../../components/shared';
@@ -86,6 +86,10 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   );
   const isDropHover = isOver && canAcceptDrop;
 
+  const [isDragHovered, setIsDragHovered] = useState(false);
+  const [isDeleteHovered, setIsDeleteHovered] = useState(false);
+  const [isNodeHovered, setIsNodeHovered] = useState(false);
+
   const handleSelect = () => {
     if (dragState?.isDragging) {
       return; // Avoid triggering selection while dragging
@@ -154,6 +158,52 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     return 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%)';
   })();
 
+  const deleteButtonStyle = useMemo<React.CSSProperties>(() => ({
+    minWidth: isDeleteHovered ? '92px' : '28px',
+    width: isDeleteHovered ? 'auto' : '28px',
+    height: '28px',
+    borderRadius: '999px',
+    backgroundColor: isDeleteHovered ? 'rgba(220, 38, 38, 0.95)' : 'rgba(15, 23, 42, 0.8)',
+    color: '#ffffff',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: isDeleteHovered ? '0.75rem' : '1rem',
+    fontWeight: 600,
+    lineHeight: 1,
+    padding: isDeleteHovered ? '0 14px' : '0',
+    transition: 'all 0.2s ease',
+    boxShadow: isDeleteHovered ? '0 10px 18px rgba(220, 38, 38, 0.28)' : '0 6px 14px rgba(15, 23, 42, 0.15)',
+    pointerEvents: 'auto',
+  }), [isDeleteHovered]);
+
+  const dragButtonStyle = useMemo<React.CSSProperties>(() => ({
+    minWidth: isDragHovered ? '72px' : '22px',
+    width: isDragHovered ? 'auto' : '22px',
+    height: '22px',
+    borderRadius: '999px',
+    backgroundColor: isDragHovered ? 'rgba(34, 197, 94, 0.95)' : 'rgba(107, 114, 128, 0.8)',
+    color: '#ffffff',
+    border: 'none',
+    cursor: isDragSource ? 'grabbing' : 'grab',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: isDragHovered ? '0.7rem' : '0.7rem',
+    fontWeight: 600,
+    padding: isDragHovered ? '0 12px' : '0',
+    transition: 'all 0.2s ease',
+    boxShadow: isDragHovered ? '0 10px 18px rgba(34, 197, 94, 0.24)' : '0 6px 14px rgba(107, 114, 128, 0.25)',
+    pointerEvents: 'auto',
+  }), [isDragHovered, isDragSource]);
+
+  const hoverRing = '0 0 0 3px rgba(249, 115, 22, 0.45)';
+  const shouldHideBorderForHover = isNodeHovered && !isDragSource && !canAcceptDrop && !isSelected && !isHighlighted && !isBranchMember;
+  const appliedBorderColor = shouldHideBorderForHover ? 'transparent' : borderColor;
+  const appliedBoxShadow = isNodeHovered ? `${boxShadow}, ${hoverRing}` : boxShadow;
+
   return (
     <div style={containerStyle}>
       <Handle
@@ -167,12 +217,12 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
         ref={setNodeRef}
         {...attributes}
         style={{
-          width: '280px',
+          width: '320px',
           height: '160px',
           borderRadius: '18px',
           background: backgroundColor,
-          border: `2px solid ${borderColor}`,
-          boxShadow,
+          border: `2px solid ${appliedBorderColor}`,
+          boxShadow: appliedBoxShadow,
           padding: '0',
           boxSizing: 'border-box',
           transition: 'all 0.2s ease',
@@ -188,6 +238,10 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
         onClick={handleSelect}
         role={onSelect ? 'button' : undefined}
         tabIndex={onSelect ? 0 : -1}
+        onMouseEnter={() => setIsNodeHovered(true)}
+        onMouseLeave={() => setIsNodeHovered(false)}
+        onFocus={() => setIsNodeHovered(true)}
+        onBlur={() => setIsNodeHovered(false)}
         onKeyDown={(event) => {
           if (!onSelect) return;
           if (event.key === 'Enter' || event.key === ' ') {
@@ -212,30 +266,11 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               onTouchStart={(e) => e.stopPropagation()}
               aria-label={`Delete ${employee.name}`}
               title={`Delete ${employee.name}'s branch`}
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '999px',
-                backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                color: 'var(--color-white)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.875rem',
-                transition: 'background-color 0.2s ease',
-                boxShadow: '0 6px 14px rgba(15, 23, 42, 0.15)',
-                pointerEvents: 'auto',
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.9)';
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
-              }}
+              style={deleteButtonStyle}
+              onMouseEnter={() => setIsDeleteHovered(true)}
+              onMouseLeave={() => setIsDeleteHovered(false)}
             >
-              ×
+              {isDeleteHovered ? 'Delete' : '×'}
             </button>
           </div>
         )}
@@ -253,30 +288,11 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               {...listeners}
               aria-label={`Move ${employee.name}`}
               title={`Drag to move ${employee.name}`}
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '999px',
-                backgroundColor: 'rgba(107, 114, 128, 0.8)',
-                color: 'var(--color-white)',
-                border: 'none',
-                cursor: isDragSource ? 'grabbing' : 'grab',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.7rem',
-                transition: 'background-color 0.2s ease',
-                boxShadow: '0 6px 14px rgba(107, 114, 128, 0.25)',
-                pointerEvents: 'auto',
-              }}
-              onMouseEnter={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 1)';
-              }}
-              onMouseLeave={(event) => {
-                event.currentTarget.style.backgroundColor = 'rgba(107, 114, 128, 0.8)';
-              }}
+              style={dragButtonStyle}
+              onMouseEnter={() => setIsDragHovered(true)}
+              onMouseLeave={() => setIsDragHovered(false)}
             >
-              ⋮⋮
+              {isDragHovered ? 'Drag' : '⋮⋮'}
             </button>
           </div>
         )}
