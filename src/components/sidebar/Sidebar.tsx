@@ -495,7 +495,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               e.currentTarget.style.backgroundColor = 'rgba(148, 163, 184, 0.12)';
             }}
           >
-            Collapse Till Manegers
+            Collapse Till Managers
           </button>
         </div>
       </div>
