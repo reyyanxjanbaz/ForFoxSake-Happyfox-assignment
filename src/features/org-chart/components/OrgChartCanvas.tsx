@@ -277,7 +277,7 @@ export default function OrgChartCanvas({
       </DndContext>
       
       {/* Undo Alert */}
-      <UndoAlert onUndo={onRestoreFromUndo || (() => console.log('No restore function provided'))} />
+      <UndoAlert onUndo={onRestoreFromUndo || (() => {})} />
     </div>
   );
 }

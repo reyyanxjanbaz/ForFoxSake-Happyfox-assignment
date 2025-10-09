@@ -79,7 +79,7 @@
   --duration-slow: 0.5s;
 
   /* Layout dimensions */
-  --sidebar-width: 414px;
+  --sidebar-width: 352px;
   --sidebar-width-collapsed: 60px;
   --node-width: 320px;
   --node-height: 120px;
@@ -216,7 +216,7 @@ textarea:focus-visible,
 /* Large tablets and small desktops */
 @media (max-width: 1024px) {
   :root {
-    --sidebar-width: 322px;
+    --sidebar-width: 274px;
     --sidebar-width-collapsed: 50px;
     --space-4: 0.875rem;
     --space-6: 1.25rem;

@@ -93,53 +93,6 @@ export const detectCycle = (
   return isDescendant(employeeId, newManagerId);
 };
 
-// Update hierarchy after employee reassignment
-export const updateHierarchyOnReassignment = (
-  hierarchy: OrgHierarchy,
-  employeeId: string,
-  oldManagerId: string | null,
-  newManagerId: string | null
-): OrgHierarchy => {
-  const newHierarchy: OrgHierarchy = {
-    roots: [...hierarchy.roots],
-    children: { ...hierarchy.children },
-    levels: { ...hierarchy.levels },
-  };
-
-  // Remove from old manager's children
-  if (oldManagerId && newHierarchy.children[oldManagerId]) {
-    newHierarchy.children[oldManagerId] = newHierarchy.children[oldManagerId].filter(
-      id => id !== employeeId
-    );
-  } else {
-    // Remove from roots if was a root employee
-    newHierarchy.roots = newHierarchy.roots.filter(id => id !== employeeId);
-  }
-
-  // Add to new manager's children
-  if (newManagerId) {
-    if (!newHierarchy.children[newManagerId]) {
-      newHierarchy.children[newManagerId] = [];
-    }
-    newHierarchy.children[newManagerId].push(employeeId);
-  } else {
-    // Add to roots if new manager is null
-    newHierarchy.roots.push(employeeId);
-  }
-
-  // Recalculate levels for affected subtree
-  const recalculateLevels = (nodeId: string, level: number) => {
-    newHierarchy.levels[nodeId] = level;
-    const childIds = newHierarchy.children[nodeId] || [];
-    childIds.forEach(childId => recalculateLevels(childId, level + 1));
-  };
-
-  const newLevel = newManagerId ? (newHierarchy.levels[newManagerId] || 0) + 1 : 0;
-  recalculateLevels(employeeId, newLevel);
-
-  return newHierarchy;
-};
-
 // Get all descendants of an employee
 export const getDescendants = (employeeId: string, hierarchy: OrgHierarchy): string[] => {
   const descendants: string[] = [];
@@ -156,21 +109,4 @@ export const getDescendants = (employeeId: string, hierarchy: OrgHierarchy): str
   }
 
   return descendants;
-};
-
-// Get path from root to employee
-export const getPathToRoot = (employeeId: string, employees: Employee[]): string[] => {
-  const path: string[] = [];
-  let currentEmployee = employees.find(emp => emp.id === employeeId);
-
-  while (currentEmployee) {
-    path.unshift(currentEmployee.id);
-    if (currentEmployee.managerId) {
-      currentEmployee = employees.find(emp => emp.id === currentEmployee!.managerId);
-    } else {
-      break;
-    }
-  }
-
-  return path;
 };

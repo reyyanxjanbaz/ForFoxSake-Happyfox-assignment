@@ -127,27 +127,6 @@ export const updateFilterQuery = (
   return newState;
 };
 
-// Clear specific filter
-export const clearFilter = (
-  filterState: FilterState,
-  field: 'name' | 'designation' | 'employeeId',
-  employees: Employee[]
-): FilterState => {
-  const newState: FilterState = {
-    ...filterState,
-    [`${field}Query`]: '',
-    activeFilters: {
-      ...filterState.activeFilters,
-      [field]: false,
-    },
-  };
-
-  // Recalculate results after clearing filter
-  newState.results = combineFilters(newState, employees);
-  
-  return newState;
-};
-
 // Clear all filters
 export const clearAllFilters = (): FilterState => {
   return { ...initialFilterState };

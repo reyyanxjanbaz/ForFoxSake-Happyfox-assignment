@@ -91,26 +91,21 @@ export const useDragAndDrop = ({
       validDropTargets: validTargets,
     });
 
-    console.log(`🚀 Drag started for employee: ${employeeId}`);
-    console.log(`✅ Valid drop targets: ${validTargets.length} employees`);
     onDragStart?.(employeeId);
   }, [getValidDropTargets, onDragStart]);
 
   // Handle drag over with @dnd-kit
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { active, over } = event;
+    const { over } = event;
     
     if (!over || !dragState.isDragging) return;
 
     const targetId = over.id as string;
-    const sourceId = active.id as string;
     
     setDragState(prev => ({
       ...prev,
       hoveredTargetId: targetId,
     }));
-
-    console.log(`🎯 Dragging ${sourceId} over ${targetId}`);
   }, [dragState.isDragging]);
 
   // Handle drag end with @dnd-kit
@@ -121,7 +116,6 @@ export const useDragAndDrop = ({
     setDragState(initialDragState);
     
     if (!over) {
-      console.log('❌ Drag ended without drop target');
       onDragEnd?.(false);
       return;
     }
@@ -129,11 +123,8 @@ export const useDragAndDrop = ({
     const sourceId = active.id as string;
     const targetId = over.id as string;
     
-    console.log(`🎯 Attempting to drop ${sourceId} on ${targetId}`);
-    
     // Validate the drop operation
     if (!isValidDropTarget(sourceId, targetId)) {
-      console.log('❌ Invalid drop target');
       
       // Check if it would create a cycle and notify
       const hierarchy = buildOrgHierarchy(employees);
@@ -147,8 +138,6 @@ export const useDragAndDrop = ({
     }
 
     try {
-      console.log('🔄 Updating employee manager...');
-      
       // Update the employee's manager via API
       const updateRequest: EmployeeUpdateRequest = {
         managerId: targetId,
@@ -163,7 +152,6 @@ export const useDragAndDrop = ({
         onEmployeeUpdate(updatedEmployees);
       }
 
-      console.log('✅ Employee successfully reassigned!');
       onDragEnd?.(true, sourceId, targetId);
 
     } catch (error) {
