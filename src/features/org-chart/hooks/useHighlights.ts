@@ -14,6 +14,7 @@ export interface UseHighlightsProps {
 export interface UseHighlightsReturn {
   highlightedEmployeeIds: string[];
   highlightEmployee: (employeeId: string, reason: 'filter' | 'drag') => void;
+  highlightEmployees: (employeeIds: string[], reason?: 'filter' | 'drag') => void;
   unhighlightEmployee: (employeeId: string) => void;
   clearAllHighlights: () => void;
   isEmployeeHighlighted: (employeeId: string) => boolean;
@@ -75,6 +76,12 @@ export const useHighlights = ({
     }
   }, [onEmployeeHighlight]);
 
+  const highlightEmployees = useCallback((employeeIds: string[], reason: 'filter' | 'drag' = 'filter') => {
+    if (onEmployeeHighlight && employeeIds.length > 0) {
+      onEmployeeHighlight(employeeIds, true, reason);
+    }
+  }, [onEmployeeHighlight]);
+
   // Remove highlight from a specific employee
   const unhighlightEmployee = useCallback((employeeId: string) => {
     if (onEmployeeHighlight) {
@@ -104,6 +111,7 @@ export const useHighlights = ({
   return {
     highlightedEmployeeIds,
     highlightEmployee,
+    highlightEmployees,
     unhighlightEmployee,
     clearAllHighlights,
     isEmployeeHighlighted,

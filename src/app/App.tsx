@@ -1,13 +1,18 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ReactFlowProvider } from 'reactflow';
 import OrgChartProvider, { useOrgChart } from '../features/org-chart/context/OrgChartProvider';
 import Sidebar from '../components/sidebar/Sidebar';
+import { SidebarSlim } from '../components/sidebar/SidebarSlim';
 import FilterPanel, { type FilterCriteria } from '../components/sidebar/FilterPanel';
 import OrgChartCanvas from '../features/org-chart/components/OrgChartCanvas';
 import AddNodeModal from '../features/org-chart/components/AddNodeModal';
+import { HelpModal } from '../components/modals/HelpModal';
+import { SettingsModal } from '../components/modals/SettingsModal';
 import type { Employee } from '../features/org-chart/state/employee';
 import '../styles/globals.css';
+
+type OverlayType = 'filters' | 'tree' | 'settings' | 'help';
 
 // Notification component for showing drag and drop feedback
 function NotificationArea() {
@@ -123,7 +128,7 @@ function SidebarWrapper({ onAddEmployee }: { onAddEmployee: () => void }) {
 }
 
 // Wrapper component to connect filter panel to context state
-function FilterPanelWrapper() {
+function FilterPanelWrapper({ isCollapsed = false }: { isCollapsed?: boolean } = {}) {
   const { state, updateFilter, clearFilters } = useOrgChart();
 
   const handleFilterChange = (criteria: FilterCriteria, changedField: keyof FilterCriteria) => {
@@ -142,7 +147,48 @@ function FilterPanelWrapper() {
       filterState={state.filterState}
       onFilterChange={handleFilterChange}
       onClearFilters={clearFilters}
-      isCollapsed
+      isCollapsed={isCollapsed}
+    />
+  );
+}
+
+// Wrapper for SidebarSlim that provides data from context
+function SidebarSlimWrapper({
+  showLabels,
+  onToggleLabels,
+  onOpenFilter,
+  onOpenTree,
+  onOpenSettings,
+  onOpenHelp,
+  onHighlightInterns,
+  onHighlightExecutives,
+  onHighlightLeads,
+}: {
+  showLabels: boolean;
+  onToggleLabels: () => void;
+  onOpenFilter: () => void;
+  onOpenTree: () => void;
+  onOpenSettings: () => void;
+  onOpenHelp: () => void;
+  onHighlightInterns: () => void;
+  onHighlightExecutives: () => void;
+  onHighlightLeads: () => void;
+}) {
+  const { state, highlightedEmployeeIds } = useOrgChart();
+
+  return (
+    <SidebarSlim
+      showLabels={showLabels}
+      onToggleLabels={onToggleLabels}
+      filterState={state.filterState}
+      highlightCount={highlightedEmployeeIds.length}
+      onOpenFilter={onOpenFilter}
+      onOpenTree={onOpenTree}
+      onOpenSettings={onOpenSettings}
+      onOpenHelp={onOpenHelp}
+      onHighlightInterns={onHighlightInterns}
+      onHighlightExecutives={onHighlightExecutives}
+      onHighlightLeads={onHighlightLeads}
     />
   );
 }
@@ -191,6 +237,21 @@ function App() {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeOverlay, setActiveOverlay] = useState<OverlayType | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    const stored = window.localStorage.getItem('ffs-theme');
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  });
 
   // Responsive breakpoint detection
   useEffect(() => {
@@ -210,21 +271,285 @@ function App() {
     return () => window.removeEventListener('resize', checkBreakpoints);
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.setAttribute('data-theme', theme);
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('ffs-theme', theme);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (!activeOverlay) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveOverlay(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeOverlay]);
+
+  const overlayTitles: Record<OverlayType, string> = useMemo(() => ({
+    filters: 'Filters',
+    tree: 'Organization Tree',
+    settings: 'Quick Settings',
+    help: 'Help & Guidance',
+  }), []);
+
+  const helpTopics = useMemo(
+    () => [
+      {
+        title: 'Expand navigation',
+        details: 'Use the top arrow to toggle labels for every sidebar tool without opening the full-width panel.',
+      },
+      {
+        title: 'Filter employees',
+        details: 'Tap the funnel icon to open the floating filter window. Apply name, role, or ID filters and watch the badge count update instantly.',
+      },
+      {
+        title: 'Explore the org tree',
+        details: 'Select the grid icon to open the hierarchy window. You can expand nodes, highlight branches, and add people from there.',
+      },
+      {
+        title: 'Track highlights',
+        details: 'The star badge shows how many employees are highlighted. Hover to review counts, or open the tree to inspect them.',
+      },
+      {
+        title: 'Adjust quick settings',
+        details: 'Open the gear icon to switch themes. We will keep adding controls here, and this guide will grow alongside them.',
+      },
+    ],
+    []
+  );
+
+  const renderOverlayBody = (): ReactNode => {
+    if (!activeOverlay) {
+      return null;
+    }
+
+    switch (activeOverlay) {
+      case 'filters':
+        return (
+          <div className="floating-window__scroll">
+            <FilterPanelWrapper isCollapsed={false} />
+          </div>
+        );
+      case 'tree':
+        return (
+          <div className="floating-window__scroll">
+            <SidebarWrapper onAddEmployee={handleAddEmployee} />
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="floating-window__settings">
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                backgroundColor: 'var(--color-gray-50)',
+                borderRadius: '8px',
+                border: '1px solid var(--color-border)',
+                marginBottom: '16px',
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)' }}>
+                Theme
+              </div>
+              <button
+                onClick={handleToggleTheme}
+                style={{
+                  position: 'relative',
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  backgroundColor: theme === 'dark' ? 'var(--color-primary)' : 'var(--color-gray-300)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease',
+                  flexShrink: 0,
+                }}
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                <motion.div
+                  initial={false}
+                  animate={{
+                    x: theme === 'dark' ? 22 : 2,
+                  }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={{
+                    position: 'absolute',
+                    top: '2px',
+                    left: '0px',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '10px',
+                    backgroundColor: 'white',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
+                  }}
+                />
+              </button>
+            </div>
+            <p className="floating-window__note">More settings will appear here as features are added.</p>
+          </div>
+        );
+      case 'help':
+        return (
+          <div className="floating-window__scroll">
+            <ul className="floating-window__list">
+              {helpTopics.map((topic) => (
+                <li key={topic.title}>
+                  <strong>{topic.title}:</strong> {topic.details}
+                </li>
+              ))}
+            </ul>
+            <p className="floating-window__note">
+              We refresh these notes whenever the navigation changes, so you always have the latest guidance.
+            </p>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
-  const handleAddEmployee = () => {
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed(prev => !prev);
+  }, []);
+
+  const toggleOverlay = useCallback((type: OverlayType) => {
+    setActiveOverlay(prev => (prev === type ? null : type));
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    setActiveOverlay(null);
+  }, []);
+
+  const handleAddEmployee = useCallback(() => {
+    closeOverlay();
     setShowAddModal(true);
-  };
+  }, [closeOverlay]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setShowAddModal(false);
-  };
+  }, []);
+
+  const handleOpenFilterOverlay = useCallback(() => {
+    toggleOverlay('filters');
+  }, [toggleOverlay]);
+
+  const handleOpenTreeOverlay = useCallback(() => {
+    toggleOverlay('tree');
+  }, [toggleOverlay]);
+
+  const handleOpenSettingsOverlay = useCallback(() => {
+    toggleOverlay('settings');
+  }, [toggleOverlay]);
+
+  const handleOpenHelpOverlay = useCallback(() => {
+    toggleOverlay('help');
+  }, [toggleOverlay]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
 
   return (
     <OrgChartProvider>
-      <ReactFlowProvider>
+      <InnerApp
+        sidebarCollapsed={sidebarCollapsed}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        showAddModal={showAddModal}
+        activeOverlay={activeOverlay}
+        theme={theme}
+        toggleSidebar={toggleSidebar}
+        closeOverlay={closeOverlay}
+        handleAddEmployee={handleAddEmployee}
+        handleCloseModal={handleCloseModal}
+        handleOpenFilterOverlay={handleOpenFilterOverlay}
+        handleOpenTreeOverlay={handleOpenTreeOverlay}
+        handleOpenSettingsOverlay={handleOpenSettingsOverlay}
+        handleOpenHelpOverlay={handleOpenHelpOverlay}
+        handleToggleTheme={handleToggleTheme}
+        overlayTitles={overlayTitles}
+        renderOverlayBody={renderOverlayBody}
+      />
+    </OrgChartProvider>
+  );
+}
+
+// Inner component with access to context
+function InnerApp({
+  sidebarCollapsed,
+  isMobile,
+  isTablet,
+  showAddModal,
+  activeOverlay,
+  theme,
+  toggleSidebar,
+  closeOverlay,
+  handleAddEmployee,
+  handleCloseModal,
+  handleOpenFilterOverlay,
+  handleOpenTreeOverlay,
+  handleOpenSettingsOverlay,
+  handleOpenHelpOverlay,
+  handleToggleTheme,
+  overlayTitles,
+  renderOverlayBody,
+}: any) {
+  const { state, highlightEmployees, clearAllHighlights, highlightedEmployeeIds } = useOrgChart();
+  
+  // Track which tier is currently highlighted for toggle functionality
+  const [activeTier, setActiveTier] = useState<'intern' | 'executive' | 'lead' | null>(null);
+
+  const toggleTierHighlights = useCallback((tier: 'intern' | 'executive' | 'lead') => {
+    if (activeTier === tier) {
+      clearAllHighlights();
+      setActiveTier(null);
+      return;
+    }
+
+    const tierEmployeeIds = state.employees
+      .filter(emp => emp.tier === tier)
+      .map(emp => emp.id);
+
+    if (tierEmployeeIds.length === 0) {
+      clearAllHighlights();
+      setActiveTier(null);
+      return;
+    }
+
+    highlightEmployees(tierEmployeeIds, 'filter');
+    setActiveTier(tier);
+  }, [activeTier, state.employees, highlightEmployees, clearAllHighlights]);
+
+  const handleHighlightInterns = useCallback(() => {
+    toggleTierHighlights('intern');
+  }, [toggleTierHighlights]);
+
+  const handleHighlightExecutives = useCallback(() => {
+    toggleTierHighlights('executive');
+  }, [toggleTierHighlights]);
+
+  const handleHighlightLeads = useCallback(() => {
+    toggleTierHighlights('lead');
+  }, [toggleTierHighlights]);
+
+  return (
+    <ReactFlowProvider>
   <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'}`}>
           {/* Notification Area */}
           <NotificationArea />
@@ -387,104 +712,77 @@ function App() {
             </motion.button>
           </div>
 
-          {/* Sidebar Panel */}
+          {/* Sidebar Panel - Slim Icon-based Navigation */}
           <motion.div 
             className={`sidebar-panel ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}
-            animate={{ 
-              width: (isMobile || isTablet)
-                ? '100%'
-                : sidebarCollapsed
-                  ? 'var(--sidebar-width-collapsed)'
-                  : 'var(--sidebar-width)',
-              height: (isMobile || isTablet) && sidebarCollapsed ? '60px' : 'auto'
+            style={{
+              width: sidebarCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-slim-expanded)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 'var(--space-3)',
+              gap: 'var(--space-2)',
             }}
             transition={{ 
-              duration: isMobile ? 0.2 : 0.3, 
-              ease: 'easeInOut',
+              duration: 0.3, 
+              ease: [0.4, 0, 0.2, 1],
               type: 'tween'
             }}
           >
-            {!sidebarCollapsed && (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {/* Header */}
-                <div style={{ 
-                  padding: 'var(--space-4)',
-                  borderBottom: '1px solid var(--color-border)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <h1 style={{ 
-                    fontSize: '1.25rem', 
-                    fontWeight: '600',
-                    color: 'var(--color-primary)',
-                    margin: 0
-                  }}>
-                    Filter & Search
-                  </h1>
-                  <motion.button
-                    onClick={toggleSidebar}
-                    whileHover={!isMobile ? { scale: 1.05 } : {}}
-                    whileTap={{ scale: 0.95 }}
-                    style={{
-                      width: '48px',
-                      height: '48px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '12px',
-                      backgroundColor: 'var(--color-primary)',
-                      border: '1px solid var(--color-border)',
-                      color: 'white',
-                      cursor: 'pointer',
-                    }}
-                    aria-label="Collapse sidebar"
-                  >
-                    ←
-                  </motion.button>
-                </div>
-
-                {/* Filter Panel */}
-                <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
-                  <FilterPanelWrapper />
-                </div>
-
-                {/* Sidebar Tree */}
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                  <SidebarWrapper onAddEmployee={handleAddEmployee} />
-                </div>
-              </div>
-            )}
-
-            {sidebarCollapsed && (
-              <div style={{ 
-                padding: 'var(--space-2)',
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <motion.button
-                  onClick={toggleSidebar}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    width: '48px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '12px',
-                    backgroundColor: 'var(--color-primary)',
-                    border: '1px solid var(--color-border)',
-                    color: 'white',
-                    cursor: 'pointer',
-                  }}
-                  aria-label="Expand sidebar"
-                >
-                  →
-                </motion.button>
-              </div>
-            )}
+            <SidebarSlimWrapper
+              showLabels={!sidebarCollapsed}
+              onToggleLabels={toggleSidebar}
+              onOpenFilter={handleOpenFilterOverlay}
+              onOpenTree={handleOpenTreeOverlay}
+              onOpenSettings={handleOpenSettingsOverlay}
+              onOpenHelp={handleOpenHelpOverlay}
+              onHighlightInterns={handleHighlightInterns}
+              onHighlightExecutives={handleHighlightExecutives}
+              onHighlightLeads={handleHighlightLeads}
+            />
           </motion.div>
+
+          <AnimatePresence>
+            {activeOverlay && (
+              <>
+                <motion.div
+                  key="floating-overlay-backdrop"
+                  className="floating-overlay-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  role="presentation"
+                  onClick={closeOverlay}
+                />
+
+                <motion.div
+                  key={`floating-window-${activeOverlay}`}
+                  className="floating-window"
+                  initial={{ opacity: 0, y: -12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                  style={{
+                    left: `calc(${sidebarCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-slim-expanded)'} + 24px)`,
+                  }}
+                >
+                  <div className="floating-window__header">
+                    <h2>{overlayTitles[activeOverlay]}</h2>
+                    <button
+                      type="button"
+                      onClick={closeOverlay}
+                      aria-label="Close floating panel"
+                    >
+                      X
+                    </button>
+                  </div>
+                  <div className="floating-window__body">
+                    {renderOverlayBody()}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
 
           {/* Main Content Area */}
           <div className="main-content">
@@ -500,7 +798,6 @@ function App() {
           />
         </div>
       </ReactFlowProvider>
-    </OrgChartProvider>
   );
 }
 

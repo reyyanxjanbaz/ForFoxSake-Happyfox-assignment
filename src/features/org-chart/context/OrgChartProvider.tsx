@@ -186,6 +186,7 @@ export interface OrgChartContextValue {
   // Highlight operations (from useHighlights hook)
   highlightedEmployeeIds: string[];
   highlightEmployee: (employeeId: string, reason: 'filter' | 'drag') => void;
+  highlightEmployees: (employeeIds: string[], reason?: 'filter' | 'drag') => void;
   unhighlightEmployee: (employeeId: string) => void;
   clearAllHighlights: () => void;
   isEmployeeHighlighted: (employeeId: string) => boolean;

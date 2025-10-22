@@ -39,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Automatically expand roots and first-level children when hierarchy updates for the first time
   useEffect(() => {
@@ -102,6 +103,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     const employeeMap = new Map(employees.map(emp => [emp.id, emp]));
     const builtNodes: TreeNode[] = [];
 
+    // Filter employees based on search query
+    const matchesSearch = (employee: Employee): boolean => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        employee.name.toLowerCase().includes(query) ||
+        employee.designation?.toLowerCase().includes(query) ||
+        employee.employeeId?.toLowerCase().includes(query) ||
+        employee.team?.toLowerCase().includes(query)
+      );
+    };
+
     const buildNode = (employeeId: string, level: number = 0): TreeNode | null => {
       const employee = employeeMap.get(employeeId);
       if (!employee) return null;
@@ -111,11 +124,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         .map(childId => buildNode(childId, level + 1))
         .filter((node): node is TreeNode => node !== null);
 
+      // Include node if it matches search or has matching children
+      const hasMatchingChildren = childNodes.length > 0;
+      const selfMatches = matchesSearch(employee);
+
+      if (!selfMatches && !hasMatchingChildren && searchQuery.trim()) {
+        return null;
+      }
+
       return {
         employee,
         children: childNodes,
         level,
-        isExpanded: expandedNodes.has(employeeId) || level < 2, // Auto-expand first 2 levels
+        isExpanded: expandedNodes.has(employeeId) || level < 2 || (searchQuery.trim() ? true : false),
       };
     };
 
@@ -128,7 +149,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     });
 
     setTreeNodes(builtNodes);
-  }, [employees, hierarchy, expandedNodes]);
+  }, [employees, hierarchy, expandedNodes, searchQuery]);
 
   const toggleNodeExpansion = (employeeId: string) => {
     setHasUserInteracted(true);
@@ -393,6 +414,42 @@ const Sidebar: React.FC<SidebarProps> = ({
         </p>
       </div>
 
+      {/* Search Bar */}
+      <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+        <input
+          type="text"
+          placeholder="Search employees..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: '100%',
+            padding: 'var(--space-2) var(--space-3)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--border-radius)',
+            fontSize: '0.875rem',
+            backgroundColor: 'var(--color-white)',
+            color: 'var(--color-text-primary)',
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            style={{
+              marginTop: 'var(--space-2)',
+              padding: 'var(--space-1) var(--space-2)',
+              fontSize: '0.75rem',
+              backgroundColor: 'var(--color-gray-100)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+
       {/* Tree */}
       <div style={treeContainerStyle}>
         {treeNodes.length > 0 ? (
@@ -405,9 +462,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           </ul>
         ) : (
           <div style={emptyStateStyle}>
-            <p>No employees found</p>
+            <p>{searchQuery ? 'No matching employees found' : 'No employees found'}</p>
             <p style={{ fontSize: '0.75rem', marginTop: 'var(--space-2)' }}>
-              Loading organization data...
+              {searchQuery ? 'Try a different search term' : 'Loading organization data...'}
             </p>
           </div>
         )}
