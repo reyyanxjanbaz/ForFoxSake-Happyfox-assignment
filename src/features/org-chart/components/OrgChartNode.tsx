@@ -27,6 +27,7 @@ export interface OrgChartNodeData {
   isBranchMember?: boolean;
   dragState?: DragState;
   enableDragAndDrop?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 const containerStyle: React.CSSProperties = {
@@ -38,15 +39,78 @@ const containerStyle: React.CSSProperties = {
   position: 'relative',
 };
 
-const connectorStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: '-24px',
-  left: '50%',
-  width: '2px',
-  height: '24px',
-  background: 'linear-gradient(180deg, rgba(148, 163, 184, 0.5) 0%, rgba(148, 163, 184, 0) 100%)',
-  transform: 'translateX(-50%)',
-};
+const NODE_THEME_TOKENS = {
+  light: {
+    baseBackground: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%)',
+    highlightBackground: 'linear-gradient(180deg, rgba(255, 247, 237, 0.97) 0%, rgba(254, 235, 200, 0.9) 100%)',
+    branchBackground: 'linear-gradient(180deg, rgba(255, 251, 235, 0.97) 0%, rgba(254, 243, 199, 0.9) 100%)',
+    dropBackground: 'linear-gradient(180deg, rgba(236, 253, 245, 0.96) 0%, rgba(209, 250, 229, 0.9) 100%)',
+    dropHoverBackground: 'linear-gradient(180deg, rgba(209, 250, 229, 0.96) 0%, rgba(167, 243, 208, 0.92) 100%)',
+    baseBorder: 'rgba(148, 163, 184, 0.55)',
+    highlightBorder: '#fb923c',
+    branchBorder: 'rgba(251, 191, 36, 0.7)',
+    selectedBorder: 'var(--color-primary)',
+    dropBorder: '#34d399',
+    dropHoverBorder: '#10b981',
+    baseShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
+    highlightShadow: '0 18px 32px rgba(234, 88, 12, 0.18)',
+    branchShadow: '0 12px 22px rgba(251, 191, 36, 0.16)',
+    dropShadow: '0 12px 22px rgba(16, 185, 129, 0.18)',
+    dropHoverShadow: '0 14px 28px rgba(16, 185, 129, 0.28)',
+    dragActiveShadow: '0 18px 32px rgba(14, 116, 144, 0.2)',
+    connectorGradient: 'linear-gradient(180deg, rgba(148, 163, 184, 0.5) 0%, rgba(148, 163, 184, 0) 100%)',
+    hoverRing: '0 0 0 3px rgba(249, 115, 22, 0.45)',
+    deleteButtonBackground: 'rgba(15, 23, 42, 0.8)',
+    deleteButtonHoverBackground: 'rgba(220, 38, 38, 0.95)',
+    deleteButtonShadow: '0 6px 14px rgba(15, 23, 42, 0.15)',
+    deleteButtonHoverShadow: '0 10px 18px rgba(220, 38, 38, 0.28)',
+    dragButtonBackground: 'rgba(107, 114, 128, 0.8)',
+    dragButtonHoverBackground: 'rgba(107, 114, 128, 1)',
+    dragButtonActiveBackground: 'rgba(34, 197, 94, 0.95)',
+    dragButtonShadow: '0 6px 14px rgba(107, 114, 128, 0.25)',
+    dragButtonHoverShadow: '0 10px 18px rgba(34, 197, 94, 0.24)',
+    statusSelectedBackground: 'rgba(234, 88, 12, 0.9)',
+    statusDraggingBackground: 'rgba(14, 116, 144, 0.9)',
+    statusDropBackground: '#34d399',
+    statusDropHoverBackground: '#10b981',
+    statusTextColor: '#ffffff',
+  },
+  dark: {
+    baseBackground: 'linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.92) 100%)',
+    highlightBackground: 'linear-gradient(180deg, rgba(99, 46, 18, 0.92) 0%, rgba(134, 65, 22, 0.88) 100%)',
+    branchBackground: 'linear-gradient(180deg, rgba(88, 64, 7, 0.92) 0%, rgba(120, 72, 16, 0.86) 100%)',
+    dropBackground: 'linear-gradient(180deg, rgba(17, 94, 89, 0.92) 0%, rgba(15, 118, 110, 0.88) 100%)',
+    dropHoverBackground: 'linear-gradient(180deg, rgba(13, 148, 136, 0.94) 0%, rgba(16, 185, 129, 0.9) 100%)',
+    baseBorder: 'rgba(148, 163, 184, 0.35)',
+    highlightBorder: '#fb923c',
+    branchBorder: 'rgba(253, 230, 138, 0.7)',
+    selectedBorder: '#fb923c',
+    dropBorder: 'rgba(16, 185, 129, 0.85)',
+    dropHoverBorder: 'rgba(49, 196, 141, 0.95)',
+    baseShadow: '0 18px 34px rgba(2, 6, 23, 0.65)',
+    highlightShadow: '0 20px 36px rgba(249, 115, 22, 0.28)',
+    branchShadow: '0 16px 32px rgba(253, 230, 138, 0.22)',
+    dropShadow: '0 16px 32px rgba(16, 185, 129, 0.32)',
+    dropHoverShadow: '0 18px 36px rgba(16, 185, 129, 0.4)',
+    dragActiveShadow: '0 22px 40px rgba(14, 116, 144, 0.32)',
+    connectorGradient: 'linear-gradient(180deg, rgba(148, 163, 184, 0.5) 0%, rgba(148, 163, 184, 0) 100%)',
+    hoverRing: '0 0 0 3px rgba(96, 165, 250, 0.32)',
+    deleteButtonBackground: 'rgba(15, 23, 42, 0.85)',
+    deleteButtonHoverBackground: 'rgba(220, 38, 38, 0.85)',
+    deleteButtonShadow: '0 6px 14px rgba(2, 6, 23, 0.45)',
+    deleteButtonHoverShadow: '0 10px 18px rgba(220, 38, 38, 0.4)',
+    dragButtonBackground: 'rgba(71, 85, 105, 0.85)',
+    dragButtonHoverBackground: 'rgba(148, 163, 184, 0.95)',
+    dragButtonActiveBackground: 'rgba(34, 197, 94, 0.9)',
+    dragButtonShadow: '0 6px 14px rgba(2, 6, 23, 0.45)',
+    dragButtonHoverShadow: '0 10px 18px rgba(34, 197, 94, 0.32)',
+    statusSelectedBackground: 'rgba(253, 186, 116, 0.85)',
+    statusDraggingBackground: 'rgba(14, 116, 144, 0.85)',
+    statusDropBackground: 'rgba(16, 185, 129, 0.95)',
+    statusDropHoverBackground: 'rgba(4, 196, 154, 0.95)',
+    statusTextColor: '#0f172a',
+  },
+} as const;
 
 const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   const {
@@ -57,8 +121,25 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     onSelect,
     dragState,
     enableDragAndDrop = false,
+    theme = 'light',
   } = data;
   const { onDeleteBranch } = data;
+  const themeKey: 'light' | 'dark' = theme === 'dark' ? 'dark' : 'light';
+  const themeTokens = NODE_THEME_TOKENS[themeKey];
+
+  const connectorStyle = useMemo<React.CSSProperties>(() => ({
+    position: 'absolute',
+    top: '-24px',
+    left: '50%',
+    width: '2px',
+    height: '24px',
+    background: themeTokens.connectorGradient,
+    transform: 'translateX(-50%)',
+    borderRadius: '999px',
+    opacity: 0.6,
+    pointerEvents: 'none',
+    transition: 'background 0.2s ease',
+  }), [themeKey]);
 
   // @dnd-kit draggable setup
   const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
@@ -107,63 +188,59 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
   const canDeleteBranch = Boolean(onDeleteBranch);
 
   const borderColorBase = isSelected
-    ? 'var(--color-primary)'
+    ? themeTokens.selectedBorder
     : isHighlighted
-      ? '#fb923c'
+      ? themeTokens.highlightBorder
       : isBranchMember
-        ? 'rgba(251, 191, 36, 0.7)'
-        : 'rgba(148, 163, 184, 0.55)';
+        ? themeTokens.branchBorder
+        : themeTokens.baseBorder;
 
   const borderColor = canAcceptDrop
-    ? (isDropHover ? '#10b981' : '#34d399')
+    ? (isDropHover ? themeTokens.dropHoverBorder : themeTokens.dropBorder)
     : borderColorBase;
 
-  const boxShadow = (() => {
+  const boxShadow = useMemo(() => {
     if (isDragSource) {
-      return '0 18px 32px rgba(14, 116, 144, 0.2)';
+      return themeTokens.dragActiveShadow;
     }
 
     if (isHighlighted || isSelected) {
-      return '0 18px 32px rgba(234, 88, 12, 0.18)';
+      return themeTokens.highlightShadow;
     }
 
     if (canAcceptDrop) {
-      return isDropHover
-        ? '0 14px 28px rgba(16, 185, 129, 0.28)'
-        : '0 12px 22px rgba(16, 185, 129, 0.18)';
+      return isDropHover ? themeTokens.dropHoverShadow : themeTokens.dropShadow;
     }
 
     if (isBranchMember) {
-      return '0 12px 22px rgba(251, 191, 36, 0.16)';
+      return themeTokens.branchShadow;
     }
 
-    return '0 12px 24px rgba(15, 23, 42, 0.08)';
-  })();
+    return themeTokens.baseShadow;
+  }, [canAcceptDrop, isBranchMember, isDropHover, isDragSource, isHighlighted, isSelected, themeKey]);
 
-  const backgroundColor = (() => {
+  const backgroundColor = useMemo(() => {
     if (canAcceptDrop) {
-      return isDropHover
-        ? 'linear-gradient(180deg, rgba(209, 250, 229, 0.96) 0%, rgba(167, 243, 208, 0.92) 100%)'
-        : 'linear-gradient(180deg, rgba(236, 253, 245, 0.96) 0%, rgba(209, 250, 229, 0.9) 100%)';
+      return isDropHover ? themeTokens.dropHoverBackground : themeTokens.dropBackground;
     }
 
     if (isHighlighted || isSelected) {
-      return 'linear-gradient(180deg, rgba(255, 247, 237, 0.97) 0%, rgba(254, 235, 200, 0.9) 100%)';
+      return themeTokens.highlightBackground;
     }
 
     if (isBranchMember) {
-      return 'linear-gradient(180deg, rgba(255, 251, 235, 0.97) 0%, rgba(254, 243, 199, 0.9) 100%)';
+      return themeTokens.branchBackground;
     }
 
-    return 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(241, 245, 249, 0.94) 100%)';
-  })();
+    return themeTokens.baseBackground;
+  }, [canAcceptDrop, isBranchMember, isDropHover, isHighlighted, isSelected, themeKey]);
 
   const deleteButtonStyle = useMemo<React.CSSProperties>(() => ({
     minWidth: isDeleteHovered ? '72px' : '22px',
     width: isDeleteHovered ? 'auto' : '22px',
     height: '22px',
     borderRadius: '999px',
-    backgroundColor: isDeleteHovered ? 'rgba(220, 38, 38, 0.95)' : 'rgba(15, 23, 42, 0.8)',
+    backgroundColor: isDeleteHovered ? themeTokens.deleteButtonHoverBackground : themeTokens.deleteButtonBackground,
     color: '#ffffff',
     border: 'none',
     cursor: 'pointer',
@@ -175,34 +252,55 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
     lineHeight: 1,
     padding: isDeleteHovered ? '0 12px' : '0',
     transition: 'all 0.2s ease',
-    boxShadow: isDeleteHovered ? '0 10px 18px rgba(220, 38, 38, 0.28)' : '0 6px 14px rgba(15, 23, 42, 0.15)',
+    boxShadow: isDeleteHovered ? themeTokens.deleteButtonHoverShadow : themeTokens.deleteButtonShadow,
     pointerEvents: 'auto',
-  }), [isDeleteHovered]);
+  }), [isDeleteHovered, themeKey]);
 
-  const dragButtonStyle = useMemo<React.CSSProperties>(() => ({
-    minWidth: isDragHovered ? '72px' : '22px',
-    width: isDragHovered ? 'auto' : '22px',
-    height: '22px',
-    borderRadius: '999px',
-    backgroundColor: isDragHovered ? 'rgba(34, 197, 94, 0.95)' : 'rgba(107, 114, 128, 0.8)',
-    color: '#ffffff',
-    border: 'none',
-    cursor: isDragSource ? 'grabbing' : 'grab',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: isDragHovered ? '0.7rem' : '0.7rem',
-    fontWeight: 600,
-    padding: isDragHovered ? '0 12px' : '0',
-    transition: 'all 0.2s ease',
-    boxShadow: isDragHovered ? '0 10px 18px rgba(34, 197, 94, 0.24)' : '0 6px 14px rgba(107, 114, 128, 0.25)',
-    pointerEvents: 'auto',
-  }), [isDragHovered, isDragSource]);
+  const dragButtonStyle = useMemo<React.CSSProperties>(() => {
+    const background = isDragSource
+      ? themeTokens.dragButtonActiveBackground
+      : (isDragHovered ? themeTokens.dragButtonHoverBackground : themeTokens.dragButtonBackground);
 
-  const hoverRing = '0 0 0 3px rgba(249, 115, 22, 0.45)';
+    const shadow = (isDragHovered || isDragSource)
+      ? themeTokens.dragButtonHoverShadow
+      : themeTokens.dragButtonShadow;
+
+    return {
+      minWidth: (isDragHovered || isDragSource) ? '72px' : '22px',
+      width: (isDragHovered || isDragSource) ? 'auto' : '22px',
+      height: '22px',
+      borderRadius: '999px',
+      backgroundColor: background,
+      color: '#ffffff',
+      border: 'none',
+      cursor: isDragSource ? 'grabbing' : 'grab',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: (isDragHovered || isDragSource) ? '0.7rem' : '0.7rem',
+      fontWeight: 600,
+      padding: (isDragHovered || isDragSource) ? '0 12px' : '0',
+      transition: 'all 0.2s ease',
+      boxShadow: shadow,
+      pointerEvents: 'auto',
+    } satisfies React.CSSProperties;
+  }, [isDragHovered, isDragSource, themeKey]);
+
+  const hoverRing = themeTokens.hoverRing;
   const shouldHideBorderForHover = isNodeHovered && !isDragSource && !canAcceptDrop;
   const appliedBorderColor = shouldHideBorderForHover ? 'transparent' : borderColor;
   const appliedBoxShadow = isNodeHovered ? `${boxShadow}, ${hoverRing}` : boxShadow;
+
+  const statusBackground = canAcceptDrop
+    ? (isDropHover ? themeTokens.statusDropHoverBackground : themeTokens.statusDropBackground)
+    : (isDragSource ? themeTokens.statusDraggingBackground : themeTokens.statusSelectedBackground);
+
+  const statusLabel = canAcceptDrop
+    ? (isDropHover ? '⬇️ DROP HERE' : '✅ VALID TARGET')
+    : (isDragSource ? '🔄 MOVING' : '✓ SELECTED');
+
+  const statusAnimation = (isDragSource || canAcceptDrop) ? 'pulse 1.5s infinite' : 'none';
+  const statusShadow = themeKey === 'dark' ? '0 2px 12px rgba(2, 6, 23, 0.6)' : '0 2px 8px rgba(0, 0, 0, 0.2)';
 
   return (
     <div style={containerStyle}>
@@ -292,7 +390,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               onMouseEnter={() => setIsDragHovered(true)}
               onMouseLeave={() => setIsDragHovered(false)}
             >
-              {isDragHovered ? 'Drag' : '⋮⋮'}
+              {isDragHovered || isDragSource ? 'Drag' : '⋮⋮'}
             </button>
           </div>
         )}
@@ -318,7 +416,7 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               size="medium"
               showRole={true}
               showTeam={true}
-              theme="light"
+              theme={themeKey}
               className="org-chart-node-card"
             />
           </div>
@@ -332,21 +430,16 @@ const OrgChartNodeComponent = ({ data }: NodeProps<OrgChartNodeData>) => {
               transform: 'translateX(-50%)',
               padding: '3px 10px',
               borderRadius: '999px',
-              backgroundColor: canAcceptDrop 
-                ? (isDropHover ? '#10b981' : '#34d399')
-                : (isDragSource ? 'rgba(14, 116, 144, 0.9)' : 'rgba(234, 88, 12, 0.9)'),
-              color: 'white',
+              backgroundColor: statusBackground,
+              color: themeTokens.statusTextColor,
               fontSize: '0.625rem',
               fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              animation: (isDragSource || canAcceptDrop) ? 'pulse 1.5s infinite' : 'none',
+              boxShadow: statusShadow,
+              animation: statusAnimation,
               zIndex: 1,
             }}
           >
-            {canAcceptDrop 
-              ? (isDropHover ? '⬇️ DROP HERE' : '✅ VALID TARGET')
-              : (isDragSource ? '🔄 MOVING' : '✓ SELECTED')
-            }
+            {statusLabel}
           </div>
         )}
       </div>

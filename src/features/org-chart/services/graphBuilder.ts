@@ -170,6 +170,7 @@ export interface BuildOrgChartParams {
   onSelectEmployee?: (employeeId: string) => void;
   onDeleteBranch?: (employeeId: string) => void;
   dragCallbacks?: DragCallbacks;
+  theme?: 'light' | 'dark';
 }
 
 export interface BuildOrgChartResult {
@@ -178,8 +179,9 @@ export interface BuildOrgChartResult {
   size: { width: number; height: number };
 }
 
-const buildEdgesFromHierarchy = (hierarchy: OrgHierarchy): Edge[] => {
+const buildEdgesFromHierarchy = (hierarchy: OrgHierarchy, theme: 'light' | 'dark'): Edge[] => {
   const edges: Edge[] = [];
+  const stroke = theme === 'dark' ? '#64748b' : EDGE_STYLE.stroke;
 
   Object.entries(hierarchy.children).forEach(([parentId, childIds]) => {
     childIds.forEach((childId) => {
@@ -189,10 +191,10 @@ const buildEdgesFromHierarchy = (hierarchy: OrgHierarchy): Edge[] => {
         target: childId,
         type: 'smoothstep',
         animated: false,
-        style: EDGE_STYLE,
+        style: { ...EDGE_STYLE, stroke },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: EDGE_STYLE.stroke,
+          color: stroke,
           width: 18,
           height: 18,
         },
@@ -213,6 +215,7 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
     onSelectEmployee,
     onDeleteBranch,
     dragCallbacks,
+    theme = 'light',
   } = params;
 
   if (!employees.length) {
@@ -223,7 +226,7 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
   const branchSet = branchMemberIds;
 
   const { positions, width, height } = computeTreeLayout(employees, hierarchy);
-  const edges = buildEdgesFromHierarchy(hierarchy);
+  const edges = buildEdgesFromHierarchy(hierarchy, theme);
 
   const nodes: OrgChartNode[] = employees.map((employee) => {
     const position = positions.get(employee.id) ?? { x: MARGIN_X, y: MARGIN_Y };
@@ -247,6 +250,7 @@ export const buildOrgChart = (params: BuildOrgChartParams): BuildOrgChartResult 
         onSelect: onSelectEmployee,
         onDeleteBranch,
         enableDragAndDrop: dragCallbacks?.enableDragAndDrop ?? false,
+        theme,
       },
       style: {
         width: NODE_WIDTH,

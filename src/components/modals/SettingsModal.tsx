@@ -62,7 +62,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-surface)',
               borderRadius: '16px',
               padding: '32px',
               maxWidth: '500px',
@@ -70,7 +70,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               maxHeight: '80vh',
               overflowY: 'auto',
               zIndex: 10000,
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              boxShadow: 'var(--shadow-xl)',
+              border: '1px solid var(--color-border)',
             }}
           >
             {/* Header */}
@@ -87,8 +88,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: 'var(--color-gray-100)',
-                  border: 'none',
+                  backgroundColor: 'var(--color-background)',
+                  border: '1px solid var(--color-border)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   color: 'var(--color-text-secondary)',
@@ -109,7 +110,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '12px 16px',
-                    backgroundColor: 'var(--color-gray-50)',
+                    backgroundColor: 'var(--color-surface)',
                     borderRadius: '8px',
                     border: '1px solid var(--color-border)',
                   }}
@@ -145,7 +146,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         width: '20px',
                         height: '20px',
                         borderRadius: '10px',
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--color-background)',
                         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
                       }}
                     />
@@ -161,18 +162,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div
                   style={{
                     padding: '16px',
-                    backgroundColor: 'var(--color-gray-50)',
+                    backgroundColor: 'var(--color-surface)',
                     borderRadius: '12px',
                     border: '1px solid var(--color-border)',
                   }}
                 >
-                  <div style={{ marginBottom: '8px' }}>
+                  <div style={{ marginBottom: '8px', color: 'var(--color-text-primary)' }}>
                     <strong>Version:</strong> 1.0.0
                   </div>
-                  <div style={{ marginBottom: '8px' }}>
+                  <div style={{ marginBottom: '8px', color: 'var(--color-text-primary)' }}>
                     <strong>Built with:</strong> React + TypeScript
                   </div>
-                  <div>
+                  <div style={{ color: 'var(--color-text-primary)' }}>
                     <strong>Created:</strong> October 2025
                   </div>
                 </div>
@@ -186,7 +187,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div
                   style={{
                     padding: '16px',
-                    backgroundColor: 'var(--color-gray-50)',
+                    backgroundColor: 'var(--color-surface)',
                     borderRadius: '12px',
                     border: '1px solid var(--color-border)',
                     textAlign: 'center',
@@ -206,12 +207,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   width: '100%',
                   padding: '12px',
                   backgroundColor: 'var(--color-primary)',
-                  color: 'white',
+                  color: 'var(--color-white)',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-primary)';
                 }}
               >
                 Close

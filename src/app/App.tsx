@@ -38,10 +38,10 @@ function NotificationArea() {
         background: isSuccess 
           ? 'linear-gradient(135deg, #10b981, #34d399)' 
           : 'linear-gradient(135deg, #ef4444, #f87171)',
-        color: 'white',
+        color: 'var(--color-white)',
         fontSize: '14px',
         fontWeight: '600',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        boxShadow: 'var(--shadow-lg)',
         maxWidth: '400px',
         textAlign: 'center',
       }}
@@ -54,6 +54,27 @@ function NotificationArea() {
 // Wrapper component that connects to context
 function OrgChartCanvasWrapper() {
   const { state, highlightedEmployeeIds, selectEmployee, removeEmployeeBranch, restoreFromUndo, dragAndDrop } = useOrgChart();
+  
+  // Get theme from document
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  
+  useEffect(() => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'light';
+    setTheme(currentTheme);
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(() => {
+      const newTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'light';
+      setTheme(newTheme);
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const handleSelectEmployee = useCallback((employeeId: string) => {
     // Toggle selection: if the same employee is already selected, deselect them
@@ -98,6 +119,7 @@ function OrgChartCanvasWrapper() {
       showControls={true}
       showBackground={true}
       allowInteraction={true}
+      theme={theme}
     />
   );
 }
@@ -395,7 +417,7 @@ function App() {
                     width: '20px',
                     height: '20px',
                     borderRadius: '10px',
-                    backgroundColor: 'white',
+                    backgroundColor: 'var(--color-surface)',
                     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
                   }}
                 />
@@ -566,10 +588,10 @@ function InnerApp({
               gap: 'var(--space-2)',
               padding: 'var(--space-2) var(--space-3)',
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(255, 255, 255, 0.9)',
-              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.08)',
+              background: 'var(--color-surface)',
+              boxShadow: 'var(--shadow-md)',
               backdropFilter: 'blur(6px)',
-              border: '1px solid rgba(0, 0, 0, 0.08)',
+              border: '1px solid var(--color-border)',
               pointerEvents: 'none',
             }}
           >
@@ -686,10 +708,10 @@ function InnerApp({
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.92) 100%)',
-                border: 'none',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
                 cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(132, 132, 132, 0.28)',
+                boxShadow: 'var(--shadow-md)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -3,6 +3,7 @@
 ## Issues Fixed
 
 ### 1. Dark Theme Not Working ✅
+
 **Problem:** Clicking the theme toggle did nothing - the website stayed in light mode.
 
 **Root Cause:** Dark theme CSS variables were never defined in `globals.css`.
@@ -12,9 +13,10 @@
 **Files Modified:** `src/styles/globals.css`
 
 **Changes:**
+
 ```css
 /* Dark theme */
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* Semantic colors for dark mode */
   --color-background: #0f172a;
   --color-surface: #1e293b;
@@ -22,12 +24,12 @@
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #cbd5e1;
   --color-text-muted: #64748b;
-  
+
   /* Adjust primary colors for dark mode */
   --color-primary: var(--color-orange-400);
   --color-primary-hover: var(--color-orange-500);
   --color-primary-light: var(--color-orange-900);
-  
+
   /* Adjust shadows for dark mode */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -1px rgb(0 0 0 / 0.3);
@@ -37,6 +39,7 @@
 ```
 
 The theme now properly switches between light and dark modes, changing:
+
 - Background colors (white → dark slate)
 - Surface colors (light gray → dark blue-gray)
 - Border colors (light gray → medium slate)
@@ -44,6 +47,7 @@ The theme now properly switches between light and dark modes, changing:
 - Shadow intensities (subtle → more prominent for visibility)
 
 ### 2. Only One Employee Highlighted Instead of All ✅
+
 **Problem:** Clicking "Interns", "Executives", or "Team Leads" highlighted only ONE employee instead of ALL employees in that tier.
 
 **Root Cause:** The shared `highlightEmployee()` helper only accepts a single employee ID. Each call removed the previous highlight because the underlying reducer replaces the entire "filter" highlight set. Calling the helper in a loop meant only the last employee stayed highlighted.
@@ -53,17 +57,17 @@ The theme now properly switches between light and dark modes, changing:
 **Files Modified:** `src/features/org-chart/hooks/useHighlights.ts`, `src/features/org-chart/context/OrgChartProvider.tsx`, `src/app/App.tsx`
 
 **Before (broken):**
+
 ```typescript
 state.employees
-  .filter(emp => emp.tier === 'intern')
-  .forEach(emp => highlightEmployee(emp.id, 'filter'));
+  .filter((emp) => emp.tier === 'intern')
+  .forEach((emp) => highlightEmployee(emp.id, 'filter'));
 ```
 
 **After (fixed):**
+
 ```typescript
-const tierEmployeeIds = state.employees
-  .filter(emp => emp.tier === tier)
-  .map(emp => emp.id);
+const tierEmployeeIds = state.employees.filter((emp) => emp.tier === tier).map((emp) => emp.id);
 
 highlightEmployees(tierEmployeeIds, 'filter');
 ```
@@ -71,14 +75,18 @@ highlightEmployees(tierEmployeeIds, 'filter');
 The new helper lives inside `useHighlights`:
 
 ```typescript
-const highlightEmployees = useCallback((employeeIds: string[], reason: 'filter' | 'drag' = 'filter') => {
-  if (onEmployeeHighlight && employeeIds.length > 0) {
-    onEmployeeHighlight(employeeIds, true, reason);
-  }
-}, [onEmployeeHighlight]);
+const highlightEmployees = useCallback(
+  (employeeIds: string[], reason: 'filter' | 'drag' = 'filter') => {
+    if (onEmployeeHighlight && employeeIds.length > 0) {
+      onEmployeeHighlight(employeeIds, true, reason);
+    }
+  },
+  [onEmployeeHighlight]
+);
 ```
 
 ### 3. Can't Unselect/Toggle Highlights ✅
+
 **Problem:** Once you clicked a highlight tier button (Interns/Executives/Team Leads), there was no way to turn it off. You had to click a different tier or manually clear highlights.
 
 **Root Cause:** No toggle state tracking for which tier was active.
@@ -88,11 +96,13 @@ const highlightEmployees = useCallback((employeeIds: string[], reason: 'filter' 
 **Files Modified:** `src/app/App.tsx`
 
 **New State:**
+
 ```typescript
 const [activeTier, setActiveTier] = useState<'intern' | 'executive' | 'lead' | null>(null);
 ```
 
 **Toggle Logic:**
+
 ```typescript
 const isCurrentlyActive = activeTier === 'intern';
 
@@ -101,9 +111,7 @@ if (isCurrentlyActive) {
   clearAllHighlights();
   setActiveTier(null);
 } else {
-  const internIds = state.employees
-    .filter(emp => emp.tier === 'intern')
-    .map(emp => emp.id);
+  const internIds = state.employees.filter((emp) => emp.tier === 'intern').map((emp) => emp.id);
 
   highlightEmployees(internIds, 'filter');
   setActiveTier('intern');

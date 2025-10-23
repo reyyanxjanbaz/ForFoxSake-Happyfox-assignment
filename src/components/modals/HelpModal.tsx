@@ -44,7 +44,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              backgroundColor: 'white',
+              backgroundColor: 'var(--color-surface)',
               borderRadius: '16px',
               padding: '32px',
               maxWidth: '600px',
@@ -52,7 +52,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               maxHeight: '80vh',
               overflowY: 'auto',
               zIndex: 10000,
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+              boxShadow: 'var(--shadow-xl)',
+              border: '1px solid var(--color-border)',
             }}
           >
             {/* Header */}

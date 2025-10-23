@@ -99,7 +99,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   const matchCount = filterState?.results?.length || 0;
 
   const panelStyle: React.CSSProperties = {
-    backgroundColor: 'var(--color-white)',
+    backgroundColor: 'var(--color-surface)',
     border: '1px solid var(--color-border)',
     borderRadius: 'var(--border-radius)',
     overflow: 'hidden',
@@ -139,7 +139,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     border: '1px solid var(--color-border)',
     borderRadius: 'var(--radius-md)',
     fontSize: '0.875rem',
-    backgroundColor: 'var(--color-white)',
+    backgroundColor: 'var(--color-surface)',
     color: 'var(--color-text-primary)',
     transition: 'border-color var(--duration-fast) ease',
   };
@@ -173,7 +173,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
 
   const clearButtonStyle: React.CSSProperties = {
     ...buttonStyle,
-    backgroundColor: hasActiveFilters ? 'var(--color-primary)' : 'var(--color-gray-100)',
+    backgroundColor: hasActiveFilters ? 'var(--color-primary)' : 'var(--color-surface)',
     color: hasActiveFilters ? 'var(--color-white)' : 'var(--color-text-muted)',
     cursor: hasActiveFilters ? 'pointer' : 'not-allowed',
     border: hasActiveFilters ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',

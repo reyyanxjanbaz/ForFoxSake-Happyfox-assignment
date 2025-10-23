@@ -43,6 +43,7 @@ interface OrgChartCanvasProps {
   showControls?: boolean;
   showBackground?: boolean;
   allowInteraction?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 export default function OrgChartCanvas({
@@ -59,7 +60,9 @@ export default function OrgChartCanvas({
   showControls = true,
   showBackground = true,
   allowInteraction = true,
+  theme = 'light',
 }: OrgChartCanvasProps) {
+  const isDarkMode = theme === 'dark';
   const [nodes, setNodes] = useState<OrgChartNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
@@ -93,18 +96,21 @@ export default function OrgChartCanvas({
   }, [selectedEmployeeId, effectiveHierarchy]);
 
   const defaultEdgeOptions = useMemo(
-    () => ({
-      type: 'smoothstep' as const,
-      animated: false,
-      style: { stroke: '#94A3B8', strokeWidth: 2 },
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: '#94A3B8',
-        width: 18,
-        height: 18,
-      },
-    }),
-    [],
+    () => {
+      const stroke = isDarkMode ? '#64748b' : '#94A3B8';
+      return {
+        type: 'smoothstep' as const,
+        animated: false,
+        style: { stroke, strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: stroke,
+          width: 18,
+          height: 18,
+        },
+      };
+    },
+    [isDarkMode],
   );
 
   const onNodesChange = useCallback(
@@ -174,6 +180,7 @@ export default function OrgChartCanvas({
       onSelectEmployee,
       onDeleteBranch,
       dragCallbacks,
+      theme,
     });
   }, [
     employees,
@@ -184,6 +191,7 @@ export default function OrgChartCanvas({
     onSelectEmployee,
     onDeleteBranch,
     dragCallbacks,
+    theme,
   ]);
 
   useEffect(() => {
@@ -246,7 +254,13 @@ export default function OrgChartCanvas({
             onClearSelection?.();
           }}
         >
-          {showBackground && <Background gap={24} size={1.5} />}
+          {showBackground && (
+            <Background
+              gap={24}
+              size={1.5}
+              color={isDarkMode ? '#1f2937' : '#dbeafe'}
+            />
+          )}
           {showControls && <Controls showZoom={allowInteraction} showInteractive={false} />}
           {showMiniMap && (
             <MiniMap
@@ -258,19 +272,19 @@ export default function OrgChartCanvas({
                 if (data?.isBranchMember) {
                   return '#facc15';
                 }
-                return '#1f2937';
+                return isDarkMode ? '#e2e8f0' : '#1f2937';
               }}
               nodeColor={(node) => {
                 const data = node.data as OrgChartNodeData | undefined;
                 if (data?.isHighlighted || data?.isSelected) {
-                  return '#fde68a';
+                  return isDarkMode ? '#f97316' : '#fde68a';
                 }
                 if (data?.isBranchMember) {
-                  return '#fef08a';
+                  return isDarkMode ? '#facc15' : '#fef08a';
                 }
-                return '#cbd5f5';
+                return isDarkMode ? '#334155' : '#cbd5f5';
               }}
-              maskColor="rgba(15, 23, 42, 0.12)"
+              maskColor={isDarkMode ? 'rgba(2, 6, 23, 0.55)' : 'rgba(15, 23, 42, 0.12)'}
             />
           )}
         </ReactFlow>
