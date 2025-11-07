@@ -277,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: hasChildren ? 'var(--color-orange-500)' : 'transparent',
+      color: hasChildren ? 'var(--color-primary)' : 'transparent',
       fontSize: '0.75rem',
       transition: 'transform var(--duration-fast) ease',
       transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',

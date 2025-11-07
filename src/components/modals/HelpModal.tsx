@@ -70,8 +70,8 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: 'var(--color-gray-100)',
-                  border: 'none',
+                  backgroundColor: 'var(--color-background)',
+                  border: '1px solid var(--color-border)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   color: 'var(--color-text-secondary)',
@@ -89,24 +89,24 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', color: 'var(--color-primary)' }}>
                   🎯 Sidebar Navigation
                 </h3>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--color-text-primary)' }}>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Expand Button (←):</strong> Click to expand the sidebar and view button labels
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Expand Button (←):</strong> Click to expand the sidebar and view button labels
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Filter Button (🔍):</strong> Opens filter panel to search employees by name, designation, or ID
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Filter Button (🔍):</strong> Opens filter panel to search employees by name, designation, or ID
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Highlight Button (⭐):</strong> Shows count of currently highlighted employees
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Highlight Button (⭐):</strong> Shows count of currently highlighted employees
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Organization Tree (📊):</strong> Opens hierarchical tree view of the organization
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Organization Tree (📊):</strong> Opens hierarchical tree view of the organization
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Settings Button (⚙️):</strong> Access theme and app settings
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Settings Button (⚙️):</strong> Access theme and app settings
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Help Button (?):</strong> Opens this help guide
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Help Button (?):</strong> Opens this help guide
                   </li>
                 </ul>
               </section>
@@ -116,21 +116,21 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', color: 'var(--color-primary)' }}>
                   🗺️ Chart Interactions
                 </h3>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--color-text-primary)' }}>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Pan:</strong> Click and drag on empty space to move around the chart
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Pan:</strong> Click and drag on empty space to move around the chart
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Zoom:</strong> Use mouse wheel or pinch gesture to zoom in/out
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Zoom:</strong> Use mouse wheel or pinch gesture to zoom in/out
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Select Employee:</strong> Click on an employee card to select and highlight them
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Select Employee:</strong> Click on an employee card to select and highlight them
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Drag & Drop:</strong> Drag employee cards to reassign them to different managers
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Drag & Drop:</strong> Drag employee cards to reassign them to different managers
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Delete Branch:</strong> Select an employee and use delete button to remove their entire branch
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Delete Branch:</strong> Select an employee and use delete button to remove their entire branch
                   </li>
                 </ul>
               </section>
@@ -140,18 +140,18 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', color: 'var(--color-primary)' }}>
                   🔍 Search & Filter
                 </h3>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--color-text-primary)' }}>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Name Search:</strong> Type employee name to filter results (partial matches work)
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Name Search:</strong> Type employee name to filter results (partial matches work)
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Designation Filter:</strong> Select from dropdown to filter by job title
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Designation Filter:</strong> Select from dropdown to filter by job title
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Employee ID:</strong> Search by specific employee ID number
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Employee ID:</strong> Search by specific employee ID number
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Highlights:</strong> Filtered employees are automatically highlighted on the chart
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Highlights:</strong> Filtered employees are automatically highlighted on the chart
                   </li>
                 </ul>
               </section>
@@ -161,15 +161,15 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', color: 'var(--color-primary)' }}>
                   ⌨️ Keyboard Shortcuts
                 </h3>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--color-text-primary)' }}>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Escape:</strong> Clear selection or close modals
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Escape:</strong> Clear selection or close modals
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Arrow Keys:</strong> Navigate through tree view in sidebar
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Arrow Keys:</strong> Navigate through tree view in sidebar
                   </li>
                   <li style={{ marginBottom: '8px' }}>
-                    <strong>Enter/Space:</strong> Expand/collapse nodes in tree view
+                    <strong style={{ color: 'var(--color-text-primary)' }}>Enter/Space:</strong> Expand/collapse nodes in tree view
                   </li>
                 </ul>
               </section>
@@ -179,7 +179,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', color: 'var(--color-primary)' }}>
                   💡 Tips & Tricks
                 </h3>
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--color-text-primary)' }}>
                   <li style={{ marginBottom: '8px' }}>
                     Use the minimap (bottom-right) for quick navigation across large organizations
                   </li>
@@ -207,12 +207,18 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                   width: '100%',
                   padding: '12px',
                   backgroundColor: 'var(--color-primary)',
-                  color: 'white',
+                  color: 'var(--color-white)',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-primary-hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-primary)';
                 }}
               >
                 Got it!

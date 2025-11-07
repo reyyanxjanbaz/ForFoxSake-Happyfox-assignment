@@ -37,25 +37,26 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
   const hasActiveFilters = filterState?.results && filterState.results.length > 0;
   const matchCount = filterState?.results?.length || 0;
 
-  const iconButtonStyle: React.CSSProperties = {
-    width: showLabels ? '100%' : '48px',
+  const iconButtonStyle = (opts?: { compact?: boolean; active?: boolean; square?: boolean }): React.CSSProperties => ({
+    width: showLabels && !opts?.compact ? '100%' : '48px',
     height: '48px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: showLabels ? 'flex-start' : 'center',
-    gap: showLabels ? 'var(--space-2)' : 0,
-    borderRadius: '12px',
+    justifyContent: showLabels && !opts?.compact ? 'flex-start' : 'center',
+    gap: showLabels && !opts?.compact ? 'var(--space-2)' : 0,
+    borderRadius: opts?.square ? '10px' : opts?.compact ? '999px' : '12px',
     backgroundColor: 'transparent',
     border: 'none',
     cursor: 'pointer',
     position: 'relative',
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-  };
+    transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: opts?.active ? '0 6px 18px rgba(249,115,22,0.18)' : 'none',
+  });
 
-  const countBadgeStyle: React.CSSProperties = {
+  const countBadgeStyle = (compact?: boolean): React.CSSProperties => ({
     position: 'absolute',
-    top: '2px',
-    right: '2px',
+    top: compact ? '6px' : '2px',
+    right: compact ? '6px' : '2px',
     minWidth: '18px',
     height: '18px',
     borderRadius: '9px',
@@ -67,9 +68,9 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     padding: '0 5px',
-    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
+    boxShadow: compact ? '0 6px 18px rgba(249,115,22,0.24)' : '0 2px 8px rgba(249, 115, 22, 0.4)',
     border: '2px solid var(--color-surface)',
-  };
+  });
 
   const dividerStyle: React.CSSProperties = {
     width: '32px',
@@ -88,34 +89,48 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
   const renderButtonContent = (
     icon: React.ReactNode,
     label: string,
+    forceLabel?: boolean,
   ) => (
     <>
       {icon}
-      {showLabels && <span style={labelStyle}>{label}</span>}
+      {(showLabels || forceLabel) && <span style={labelStyle}>{label}</span>}
     </>
   );
 
   return (
     <div className={`sidebar-slim ${className}`}>
-      {/* Toggle Button */}
+      {/* Creative Toggle Button */}
       <motion.button
+        data-testid="sidebar-toggle"
         onClick={onToggleLabels}
-        whileHover={{ scale: 1.05, backgroundColor: 'rgba(249, 115, 22, 0.95)' }}
-        whileTap={{ scale: 0.92 }}
+        initial={false}
+        animate={showLabels ? { width: '100%', backgroundColor: 'var(--color-primary)' } : { width: '48px', backgroundColor: 'var(--color-primary)' }}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
         style={{
-          ...iconButtonStyle,
-          backgroundColor: 'var(--color-primary)',
+          ...iconButtonStyle({ compact: !showLabels, active: showLabels, square: true }),
           color: 'var(--color-white)',
           marginBottom: 'var(--space-2)',
-          boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)',
-          justifyContent: 'center',
+          justifyContent: showLabels ? 'flex-start' : 'center',
+          paddingLeft: showLabels ? 'var(--space-3)' : undefined,
+          overflow: 'hidden',
         }}
-        aria-label={showLabels ? 'Collapse sidebar labels' : 'Expand sidebar labels'}
-        title={showLabels ? 'Collapse labels' : 'Expand labels'}
+        aria-label={showLabels ? 'Collapse sidebar' : 'Expand sidebar'}
+        title={showLabels ? 'Collapse sidebar' : 'Expand sidebar'}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 6l6 6-6 6" />
-        </svg>
+        <motion.div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }} layout>
+          <motion.svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            animate={showLabels ? { rotate: 180 } : { rotate: 0 }}
+            transition={{ type: 'tween', duration: 0.16, ease: 'easeInOut' }}
+          >
+            <path d="M9 6l6 6-6 6" />
+          </motion.svg>
+          {showLabels && (
+            <motion.span style={{ fontWeight: 700, fontSize: '0.9rem' }} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}>
+              Navigation
+            </motion.span>
+          )}
+        </motion.div>
       </motion.button>
 
       <div style={dividerStyle} />
@@ -126,7 +141,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
         whileTap={{ scale: 0.92 }}
         onClick={onOpenFilter}
         style={{
-          ...iconButtonStyle,
+          ...iconButtonStyle({ compact: !showLabels, active: hasActiveFilters }),
           backgroundColor: hasActiveFilters ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
         }}
         title={hasActiveFilters ? `${matchCount} filtered result${matchCount !== 1 ? 's' : ''}` : 'No active filters'}
@@ -137,16 +152,17 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
           </svg>,
           'Filters'
         )}
-        {hasActiveFilters && <span style={countBadgeStyle}>{matchCount}</span>}
+  {hasActiveFilters && <span style={countBadgeStyle(!showLabels)}>{matchCount}</span>}
       </motion.button>
 
       {/* Highlight Icon - Main Button */}
       <motion.button
-        whileHover={{ scale: 1.05, backgroundColor: highlightCount > 0 ? 'rgba(249, 115, 22, 0.15)' : 'rgba(156, 163, 175, 0.1)' }}
+        data-testid="highlights-trigger"
+        whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.92 }}
         onClick={() => setHighlightsExpanded(!highlightsExpanded)}
         style={{
-          ...iconButtonStyle,
+          ...iconButtonStyle({ compact: !showLabels, active: highlightsExpanded || highlightCount > 0 }),
           backgroundColor: highlightsExpanded || highlightCount > 0 ? 'rgba(249, 115, 22, 0.1)' : 'transparent',
         }}
         title={highlightCount > 0 ? `${highlightCount} highlighted employee${highlightCount !== 1 ? 's' : ''}` : 'Highlights'}
@@ -157,51 +173,31 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
           </svg>,
           'Highlights'
         )}
-        {highlightCount > 0 && <span style={countBadgeStyle}>{highlightCount}</span>}
+  {highlightCount > 0 && <span style={countBadgeStyle(!showLabels)}>{highlightCount}</span>}
       </motion.button>
 
       {/* Highlight Submenu */}
       <AnimatePresence>
-        {highlightsExpanded && (
+        {highlightsExpanded && showLabels && (
           <motion.div
+            data-testid="highlight-submenu-list"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             style={{ overflow: 'hidden', paddingLeft: 'var(--space-2)' }}
           >
-            {onHighlightInterns && (
-              <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.15)' }}
-                whileTap={{ scale: 0.92 }}
-                onClick={onHighlightInterns}
-                style={{
-                  ...iconButtonStyle,
-                  width: 'calc(100% - var(--space-2))',
-                  marginBottom: 'var(--space-1)',
-                }}
-                title="Highlight all interns"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>,
-                  'Interns'
-                )}
-              </motion.button>
-            )}
-
             {onHighlightExecutives && (
               <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(249, 115, 22, 0.15)' }}
+                data-testid="highlight-option-executives"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(249, 115, 22, 0.12)' }}
                 whileTap={{ scale: 0.92 }}
                 onClick={onHighlightExecutives}
                 style={{
-                  ...iconButtonStyle,
+                  ...iconButtonStyle({ compact: false }),
                   width: 'calc(100% - var(--space-2))',
                   marginBottom: 'var(--space-1)',
+                  boxShadow: '0 0 0 1px rgba(249, 115, 22, 0.35), 0 10px 20px rgba(249, 115, 22, 0.18)'
                 }}
                 title="Highlight all executives"
               >
@@ -219,13 +215,15 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
 
             {onHighlightLeads && (
               <motion.button
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(250, 204, 21, 0.15)' }}
+                data-testid="highlight-option-team-leads"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(250, 204, 21, 0.12)' }}
                 whileTap={{ scale: 0.92 }}
                 onClick={onHighlightLeads}
                 style={{
-                  ...iconButtonStyle,
+                  ...iconButtonStyle({ compact: false }),
                   width: 'calc(100% - var(--space-2))',
                   marginBottom: 'var(--space-1)',
+                  boxShadow: '0 0 0 1px rgba(250, 204, 21, 0.35), 0 10px 18px rgba(250, 204, 21, 0.18)'
                 }}
                 title="Highlight all team leads"
               >
@@ -239,6 +237,139 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
                 )}
               </motion.button>
             )}
+
+            {onHighlightInterns && (
+              <motion.button
+                data-testid="highlight-option-interns"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.12)' }}
+                whileTap={{ scale: 0.92 }}
+                onClick={onHighlightInterns}
+                style={{
+                  ...iconButtonStyle({ compact: false }),
+                  width: 'calc(100% - var(--space-2))',
+                  boxShadow: '0 0 0 1px rgba(34, 197, 94, 0.3), 0 8px 16px rgba(34, 197, 94, 0.18)'
+                }}
+                title="Highlight all interns"
+              >
+                {renderButtonContent(
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>,
+                  'Interns'
+                )}
+              </motion.button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating submenu when sidebar is collapsed */}
+      <AnimatePresence>
+        {highlightsExpanded && !showLabels && (
+          <motion.div
+            data-testid="highlight-floating-menu"
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              position: 'fixed',
+              left: 'calc(var(--sidebar-width-collapsed) + 12px)',
+              top: '120px',
+              zIndex: 1200,
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 12,
+              padding: 8,
+              boxShadow: 'var(--shadow-md)',
+              width: 200,
+            }}
+          >
+            {onHighlightExecutives && (
+              <motion.button
+                data-testid="highlight-floating-option-executives"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onHighlightExecutives}
+                style={{
+                  ...iconButtonStyle({ compact: false }),
+                  width: '100%',
+                  marginBottom: '6px',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  boxShadow: '0 0 0 1px rgba(249, 115, 22, 0.35), 0 10px 20px rgba(249, 115, 22, 0.18)'
+                }}
+                title="Highlight all executives"
+              >
+                {renderButtonContent(
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>,
+                  'Executives',
+                  true
+                )}
+              </motion.button>
+            )}
+
+            {onHighlightLeads && (
+              <motion.button
+                data-testid="highlight-floating-option-team-leads"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onHighlightLeads}
+                style={{
+                  ...iconButtonStyle({ compact: false }),
+                  width: '100%',
+                  marginBottom: '6px',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  boxShadow: '0 0 0 1px rgba(250, 204, 21, 0.35), 0 8px 18px rgba(250, 204, 21, 0.18)'
+                }}
+                title="Highlight all team leads"
+              >
+                {renderButtonContent(
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <polyline points="16 11 18 13 22 9" />
+                  </svg>,
+                  'Team Leads',
+                  true
+                )}
+              </motion.button>
+            )}
+
+            {onHighlightInterns && (
+              <motion.button
+                data-testid="highlight-floating-option-interns"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onHighlightInterns}
+                style={{
+                  ...iconButtonStyle({ compact: false }),
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '12px',
+                  boxShadow: '0 0 0 1px rgba(34, 197, 94, 0.3), 0 8px 16px rgba(34, 197, 94, 0.18)'
+                }}
+                title="Highlight all interns"
+              >
+                {renderButtonContent(
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>,
+                  'Interns',
+                  true
+                )}
+              </motion.button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -248,7 +379,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
         whileHover={{ scale: 1.05, backgroundColor: 'rgba(156, 163, 175, 0.1)' }}
         whileTap={{ scale: 0.92 }}
         onClick={onOpenTree}
-        style={iconButtonStyle}
+  style={iconButtonStyle({ compact: !showLabels })}
         title="Organization hierarchy"
       >
         {renderButtonContent(
@@ -273,7 +404,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
         whileHover={{ scale: 1.05, backgroundColor: 'rgba(148, 163, 184, 0.12)' }}
         whileTap={{ scale: 0.92 }}
         style={{
-          ...iconButtonStyle,
+          ...iconButtonStyle({ compact: !showLabels }),
           marginBottom: 'var(--space-1)',
         }}
         title="Quick settings"
@@ -292,7 +423,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
         onClick={onOpenHelp}
         whileHover={{ scale: 1.05, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
         whileTap={{ scale: 0.92 }}
-        style={iconButtonStyle}
+  style={iconButtonStyle({ compact: !showLabels })}
         title="Help & Documentation"
       >
         {renderButtonContent(

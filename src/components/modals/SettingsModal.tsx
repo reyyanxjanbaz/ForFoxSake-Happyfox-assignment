@@ -12,8 +12,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    // Load theme from localStorage
-    const savedTheme = localStorage.getItem('app-theme') as 'light' | 'dark' | null;
+    // Load theme from localStorage (guard for SSR / test env)
+    const savedTheme = typeof window !== 'undefined' && window.localStorage
+      ? (window.localStorage.getItem('ffs-theme') as 'light' | 'dark' | null)
+      : null;
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -23,7 +25,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    localStorage.setItem('app-theme', newTheme);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('ffs-theme', newTheme);
+    }
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
@@ -115,8 +119,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     border: '1px solid var(--color-border)',
                   }}
                 >
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)' }}>
-                    Theme
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)' }}>
+                      {theme === 'dark' ? 'Dark theme' : 'Light theme'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                      {theme === 'dark' ? 'Dark mode is active' : 'Light mode is active'}
+                    </div>
                   </div>
                   <button
                     onClick={toggleTheme}
@@ -131,7 +140,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       transition: 'background-color 0.2s ease',
                       flexShrink: 0,
                     }}
-                    aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                    aria-label={`Switch to ${theme === 'light' ? 'Dark theme' : 'Light theme'}`}
+                    title={`Switch to ${theme === 'light' ? 'Dark theme' : 'Light theme'}`}
                   >
                     <motion.div
                       initial={false}

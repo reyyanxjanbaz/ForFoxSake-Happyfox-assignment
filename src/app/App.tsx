@@ -374,55 +374,61 @@ function App() {
       case 'settings':
         return (
           <div className="floating-window__settings">
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 16px',
-                backgroundColor: 'var(--color-gray-50)',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                marginBottom: '16px',
-              }}
-            >
-              <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)' }}>
-                Theme
-              </div>
-              <button
-                onClick={handleToggleTheme}
+              <div
                 style={{
-                  position: 'relative',
-                  width: '44px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  backgroundColor: theme === 'dark' ? 'var(--color-primary)' : 'var(--color-gray-300)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s ease',
-                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  backgroundColor: 'var(--color-surface)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-border)',
+                  marginBottom: '16px',
                 }}
-                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
               >
-                <motion.div
-                  initial={false}
-                  animate={{
-                    x: theme === 'dark' ? 22 : 2,
-                  }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-text-primary)' }}>
+                    {theme === 'dark' ? 'Dark theme' : 'Light theme'}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+                    {theme === 'dark' ? 'Dark mode is active' : 'Light mode is active'}
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleTheme}
                   style={{
-                    position: 'absolute',
-                    top: '2px',
-                    left: '0px',
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '10px',
-                    backgroundColor: 'var(--color-surface)',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
+                    position: 'relative',
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '12px',
+                    backgroundColor: theme === 'dark' ? 'var(--color-primary)' : 'var(--color-gray-300)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    flexShrink: 0,
                   }}
-                />
-              </button>
-            </div>
+                  aria-label={`Switch to ${theme === 'light' ? 'Dark theme' : 'Light theme'}`}
+                  title={`Switch to ${theme === 'light' ? 'Dark theme' : 'Light theme'}`}
+                >
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      x: theme === 'dark' ? 22 : 2,
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{
+                      position: 'absolute',
+                      top: '2px',
+                      left: '0px',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--color-surface)',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.2)',
+                    }}
+                  />
+                </button>
+              </div>
             <p className="floating-window__note">More settings will appear here as features are added.</p>
           </div>
         );
