@@ -185,6 +185,7 @@ function SidebarSlimWrapper({
   onHighlightInterns,
   onHighlightExecutives,
   onHighlightLeads,
+  activeTier,
 }: {
   showLabels: boolean;
   onToggleLabels: () => void;
@@ -195,6 +196,7 @@ function SidebarSlimWrapper({
   onHighlightInterns: () => void;
   onHighlightExecutives: () => void;
   onHighlightLeads: () => void;
+  activeTier: 'intern' | 'executive' | 'lead' | null;
 }) {
   const { state, highlightedEmployeeIds } = useOrgChart();
 
@@ -211,6 +213,7 @@ function SidebarSlimWrapper({
       onHighlightInterns={onHighlightInterns}
       onHighlightExecutives={onHighlightExecutives}
       onHighlightLeads={onHighlightLeads}
+      activeTier={activeTier}
     />
   );
 }
@@ -766,6 +769,7 @@ function InnerApp({
               onHighlightInterns={handleHighlightInterns}
               onHighlightExecutives={handleHighlightExecutives}
               onHighlightLeads={handleHighlightLeads}
+              activeTier={activeTier}
             />
           </motion.div>
 

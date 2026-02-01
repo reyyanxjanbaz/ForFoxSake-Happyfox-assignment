@@ -16,6 +16,7 @@ interface SidebarSlimProps {
   onHighlightInterns?: () => void;
   onHighlightExecutives?: () => void;
   onHighlightLeads?: () => void;
+  activeTier?: 'intern' | 'executive' | 'lead' | null;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
   onHighlightInterns,
   onHighlightExecutives,
   onHighlightLeads,
+  activeTier,
   className = '',
 }) => {
   const [highlightsExpanded, setHighlightsExpanded] = useState(false);
@@ -96,6 +98,118 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
       {(showLabels || forceLabel) && <span style={labelStyle}>{label}</span>}
     </>
   );
+
+  const renderHighlightItem = (
+    title: string,
+    tier: 'executive' | 'lead' | 'intern',
+    isActive: boolean,
+    onClick: (() => void) | undefined,
+    color: string
+  ): React.ReactNode => {
+    if (!onClick) return null;
+
+    const gradients = {
+      executive: 'linear-gradient(90deg, rgba(249, 115, 22, 0.1) 0%, rgba(249, 115, 22, 0) 100%)',
+      lead: 'linear-gradient(90deg, rgba(250, 204, 21, 0.1) 0%, rgba(250, 204, 21, 0) 100%)',
+      intern: 'linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 100%)',
+    };
+
+    const activeGradients = {
+      executive: 'linear-gradient(90deg, rgba(249, 115, 22, 0.2) 0%, rgba(249, 115, 22, 0.05) 100%)',
+      lead: 'linear-gradient(90deg, rgba(250, 204, 21, 0.2) 0%, rgba(250, 204, 21, 0.05) 100%)',
+      intern: 'linear-gradient(90deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.05) 100%)',
+    };
+
+    return (
+      <motion.button
+        onClick={onClick}
+        whileHover={{ x: 4 }}
+        whileTap={{ scale: 0.98 }}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '10px 12px',
+          marginBottom: '6px',
+          backgroundColor: isActive ? 'var(--color-surface)' : 'transparent',
+          background: isActive ? activeGradients[tier] : undefined,
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        {/* Active Indicator Bar */}
+        <motion.div
+          animate={{
+            height: isActive ? '16px' : '0px',
+            opacity: isActive ? 1 : 0
+          }}
+          style={{
+            position: 'absolute',
+            left: 0,
+            width: '3px',
+            borderRadius: '0 2px 2px 0',
+            backgroundColor: color,
+          }}
+        />
+
+        {/* Color Dot Icon */}
+        <div style={{
+          width: '24px',
+          height: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '6px',
+          backgroundColor: isActive ? color : 'rgba(128,128,128,0.1)',
+          color: isActive ? '#fff' : color,
+          flexShrink: 0,
+        }}>
+          {tier === 'executive' && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          )}
+          {tier === 'lead' && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          )}
+          {tier === 'intern' && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          )}
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <span style={{ 
+            fontSize: '0.8rem', 
+            fontWeight: 600, 
+            color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+            letterSpacing: '0.01em'
+          }}>
+            {title}
+          </span>
+          {isActive && (
+            <span style={{ fontSize: '0.65rem', color: color, fontWeight: 500 }}>
+              Active
+            </span>
+          )}
+        </div>
+
+        {isActive && (
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            style={{ marginLeft: 'auto' }}
+          >
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+             <polyline points="20 6 9 17 4 12" />
+           </svg>
+          </motion.div>
+        )}
+      </motion.button>
+    );
+  };
 
   return (
     <div className={`sidebar-slim ${className}`}>
@@ -176,7 +290,7 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
   {highlightCount > 0 && <span style={countBadgeStyle(!showLabels)}>{highlightCount}</span>}
       </motion.button>
 
-      {/* Highlight Submenu */}
+      {/* Expanded Highlight Menu (Redesigned) */}
       <AnimatePresence>
         {highlightsExpanded && showLabels && (
           <motion.div
@@ -184,83 +298,33 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ overflow: 'hidden', paddingLeft: 'var(--space-2)' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
           >
-            {onHighlightExecutives && (
-              <motion.button
-                data-testid="highlight-option-executives"
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(249, 115, 22, 0.12)' }}
-                whileTap={{ scale: 0.92 }}
-                onClick={onHighlightExecutives}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: 'calc(100% - var(--space-2))',
-                  marginBottom: 'var(--space-1)',
-                  boxShadow: '0 0 0 1px rgba(249, 115, 22, 0.35), 0 10px 20px rgba(249, 115, 22, 0.18)'
-                }}
-                title="Highlight all executives"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>,
-                  'Executives'
-                )}
-              </motion.button>
-            )}
-
-            {onHighlightLeads && (
-              <motion.button
-                data-testid="highlight-option-team-leads"
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(250, 204, 21, 0.12)' }}
-                whileTap={{ scale: 0.92 }}
-                onClick={onHighlightLeads}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: 'calc(100% - var(--space-2))',
-                  marginBottom: 'var(--space-1)',
-                  boxShadow: '0 0 0 1px rgba(250, 204, 21, 0.35), 0 10px 18px rgba(250, 204, 21, 0.18)'
-                }}
-                title="Highlight all team leads"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <polyline points="16 11 18 13 22 9" />
-                  </svg>,
-                  'Team Leads'
-                )}
-              </motion.button>
-            )}
-
-            {onHighlightInterns && (
-              <motion.button
-                data-testid="highlight-option-interns"
-                whileHover={{ scale: 1.05, backgroundColor: 'rgba(34, 197, 94, 0.12)' }}
-                whileTap={{ scale: 0.92 }}
-                onClick={onHighlightInterns}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: 'calc(100% - var(--space-2))',
-                  boxShadow: '0 0 0 1px rgba(34, 197, 94, 0.3), 0 8px 16px rgba(34, 197, 94, 0.18)'
-                }}
-                title="Highlight all interns"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>,
-                  'Interns'
-                )}
-              </motion.button>
-            )}
+            <div style={{ padding: '8px', paddingTop: '4px' }}>
+              <div style={{
+                backgroundColor: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '12px',
+                padding: '8px',
+                boxShadow: 'var(--shadow-sm)',
+              }}>
+                <div style={{ 
+                  fontSize: '0.65rem', 
+                  textTransform: 'uppercase', 
+                  color: 'var(--color-text-tertiary)', 
+                  fontWeight: 700, 
+                  letterSpacing: '0.05em',
+                  marginBottom: '8px',
+                  paddingLeft: '4px'
+                }}>
+                  Quick Highlights
+                </div>
+                {renderHighlightItem('Executives', 'executive', activeTier === 'executive', onHighlightExecutives, '#f97316')}
+                {renderHighlightItem('Team Leads', 'lead', activeTier === 'lead', onHighlightLeads, '#eab308')}
+                {renderHighlightItem('Interns', 'intern', activeTier === 'intern', onHighlightInterns, '#22c55e')}
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -282,94 +346,27 @@ export const SidebarSlim: React.FC<SidebarSlimProps> = ({
               background: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               borderRadius: 12,
-              padding: 8,
-              boxShadow: 'var(--shadow-md)',
-              width: 200,
+              padding: 6,
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+              width: 190,
             }}
           >
-            {onHighlightExecutives && (
-              <motion.button
-                data-testid="highlight-floating-option-executives"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onHighlightExecutives}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: '100%',
-                  marginBottom: '6px',
-                  justifyContent: 'flex-start',
-                  paddingLeft: '12px',
-                  boxShadow: '0 0 0 1px rgba(249, 115, 22, 0.35), 0 10px 20px rgba(249, 115, 22, 0.18)'
-                }}
-                title="Highlight all executives"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>,
-                  'Executives',
-                  true
-                )}
-              </motion.button>
-            )}
-
-            {onHighlightLeads && (
-              <motion.button
-                data-testid="highlight-floating-option-team-leads"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onHighlightLeads}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: '100%',
-                  marginBottom: '6px',
-                  justifyContent: 'flex-start',
-                  paddingLeft: '12px',
-                  boxShadow: '0 0 0 1px rgba(250, 204, 21, 0.35), 0 8px 18px rgba(250, 204, 21, 0.18)'
-                }}
-                title="Highlight all team leads"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <polyline points="16 11 18 13 22 9" />
-                  </svg>,
-                  'Team Leads',
-                  true
-                )}
-              </motion.button>
-            )}
-
-            {onHighlightInterns && (
-              <motion.button
-                data-testid="highlight-floating-option-interns"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onHighlightInterns}
-                style={{
-                  ...iconButtonStyle({ compact: false }),
-                  width: '100%',
-                  justifyContent: 'flex-start',
-                  paddingLeft: '12px',
-                  boxShadow: '0 0 0 1px rgba(34, 197, 94, 0.3), 0 8px 16px rgba(34, 197, 94, 0.18)'
-                }}
-                title="Highlight all interns"
-              >
-                {renderButtonContent(
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>,
-                  'Interns',
-                  true
-                )}
-              </motion.button>
-            )}
+             <div style={{ 
+                fontSize: '0.65rem', 
+                textTransform: 'uppercase', 
+                color: 'var(--color-text-secondary)', 
+                fontWeight: 700, 
+                padding: '6px 8px',
+                borderBottom: '1px solid var(--color-border)',
+                marginBottom: '6px'
+              }}>
+                Highlight...
+              </div>
+              
+              {/* Reuse the same render logic but simplified container */}
+              {renderHighlightItem('Executives', 'executive', activeTier === 'executive', onHighlightExecutives, '#f97316')}
+              {renderHighlightItem('Team Leads', 'lead', activeTier === 'lead', onHighlightLeads, '#eab308')}
+              {renderHighlightItem('Interns', 'intern', activeTier === 'intern', onHighlightInterns, '#22c55e')}
           </motion.div>
         )}
       </AnimatePresence>
